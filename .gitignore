@@ -1,5 +1,7 @@
 ﻿# Godot 4+ specific ignores
 .godot/
+.import/
+.uid
 /android/
 
 # Godot 3+ specific ignores
