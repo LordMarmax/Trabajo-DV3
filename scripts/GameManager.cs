@@ -18,6 +18,10 @@ public partial class GameManager : Node
     // NUEVO: Referencia al manager de losetas
     public TileManager ManagerDeLosetas;
 
+    // Conseciones.
+    public ConcesionesVerdes ManagerVerdes;
+    public ConcesionesRojas ManagerRojas;
+
     public override void _Ready()
     {
         CargarCartasConstruccion();
@@ -26,7 +30,24 @@ public partial class GameManager : Node
         ManagerDeLosetas = new TileManager();
         AddChild(ManagerDeLosetas); // Lo agregamos al árbol de Godot
         ManagerDeLosetas.CargarLosetas();
-        
+
+
+        //Incializar las Concesiones verdes
+        ManagerVerdes = new ConcesionesVerdes();
+        AddChild(ManagerVerdes);
+        ManagerVerdes.CargarCartas();
+
+        //Inicializar las Concesiones rojas
+        ManagerRojas = new ConcesionesRojas();
+        AddChild(ManagerRojas);
+        ManagerRojas.CargarCartas();
+        /*Nota:
+            El GameManager podrá acceder a los datos mediante:
+                
+                ConcessionData verde = ManagerVerdes.ObtenerCarta("Carta_001");
+        */
+
+
         cartaVisualScene = GD.Load<PackedScene>("res://escenas/CartaVisual.tscn");
         mercadoUI = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/MercadoUI");
         textoConsola = GetNode<Label>("/root/Mundo/InterfazJuego/TextoConsola");
@@ -256,7 +277,7 @@ public partial class GameManager : Node
                 {
                     string forma = item.Substring(0, abre).Trim();
                     string posicion = item.Substring(abre + 1, cierra - abre - 1);
-                    carta.Space.Add(new CardSpace(posicion, forma, "Empty", false));
+                    carta.Spaces.Add(new CardSpace(posicion, forma, "Empty", false));
                 }
             }
         }
