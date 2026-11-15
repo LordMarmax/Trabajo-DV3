@@ -14,10 +14,18 @@ public partial class GameManager : Node
     private HBoxContainer mercadoUI;
     private Label textoConsola;
     private PackedScene cartaVisualScene;
+    
+    // NUEVO: Referencia al manager de losetas
+    public TileManager ManagerDeLosetas;
 
     public override void _Ready()
     {
         CargarCartasConstruccion();
+        
+        // NUEVO: Instanciamos y cargamos las losetas desde el código de tu amigo
+        ManagerDeLosetas = new TileManager();
+        AddChild(ManagerDeLosetas); // Lo agregamos al árbol de Godot
+        ManagerDeLosetas.CargarLosetas();
         
         cartaVisualScene = GD.Load<PackedScene>("res://escenas/CartaVisual.tscn");
         mercadoUI = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/MercadoUI");
@@ -207,7 +215,6 @@ public partial class GameManager : Node
                 nuevaCarta.Description = item.Value.Desc;
                 nuevaCarta.CardImage = textura;
                 
-                // NUEVO: Procesamos el texto para guardar los datos en variables
                 ProcesarEspaciosCarta(nuevaCarta);
                 
                 TodasLasCartas.Add(nuevaCarta);
@@ -215,13 +222,11 @@ public partial class GameManager : Node
         }
     }
 
-    // NUEVA FUNCIÓN: Convierte el texto de Descripción en datos estructurados
     private void ProcesarEspaciosCarta(CardData carta)
     {
         string desc = carta.Description;
         string[] partes = desc.Split(" | ");
 
-        // 1. Procesar los OCUPADOS
         if (partes[0].StartsWith("Ocup: "))
         {
             string ocupados = partes[0].Replace("Ocup: ", "");
@@ -234,13 +239,11 @@ public partial class GameManager : Node
                 {
                     string contenido = item.Substring(0, abre).Trim();
                     string posicion = item.Substring(abre + 1, cierra - abre - 1);
-                    // Los elementos impresos suelen ocupar un solo espacio de 1x1
                     carta.Spaces.Add(new CardSpace(posicion, "1x1", contenido, true));
                 }
             }
         }
 
-        // 2. Procesar los LIBRES
         if (partes.Length > 1 && partes[1].StartsWith("Libre: "))
         {
             string libres = partes[1].Replace("Libre: ", "");
@@ -253,7 +256,7 @@ public partial class GameManager : Node
                 {
                     string forma = item.Substring(0, abre).Trim();
                     string posicion = item.Substring(abre + 1, cierra - abre - 1);
-                    carta.Spaces.Add(new CardSpace(posicion, forma, "Empty", false));
+                    carta.Space.Add(new CardSpace(posicion, forma, "Empty", false));
                 }
             }
         }
