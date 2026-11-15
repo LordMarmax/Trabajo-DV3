@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://bmaa2oewwulpa"]
+
+[ext_resource type="Texture2D" uid="uid://rknqikcrlvc1" path="res://assets/tablero/tablero.png" id="1_afu8k"]
+[ext_resource type="Script" uid="uid://c3r7msw78pxxg" path="res://scripts/GameManager.cs" id="1_h3ccx"]
+
+[node name="Mundo" type="Node3D" unique_id=1787454190]
+
+[node name="InterfazJuego" type="CanvasLayer" parent="." unique_id=2140954123]
+
+[node name="FondoTablero" type="TextureRect" parent="InterfazJuego" unique_id=329991472]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_afu8k")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="MercadoUI" type="HBoxContainer" parent="InterfazJuego" unique_id=478600825]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 197.0
+offset_top = 98.0
+offset_right = -328.0
+offset_bottom = 369.0
+grow_horizontal = 2
+alignment = 1
+
+[node name="TextoConsola" type="Label" parent="InterfazJuego" unique_id=1592178746]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -23.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Aqui irá el texto
+"
+
+[node name="LogicaJuego" type="Node" parent="." unique_id=149358308]
+script = ExtResource("1_h3ccx")
+
+[node name="Automata" type="Node" parent="." unique_id=815937069]

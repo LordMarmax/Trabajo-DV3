@@ -1,0 +1,55 @@
+[gd_scene format=3 uid="uid://dm8lwf65rijit"]
+
+[node name="CartaTablero" type="Control" unique_id=483796086]
+custom_minimum_size = Vector2(130, 180)
+clip_contents = true
+layout_mode = 3
+anchor_right = 0.16800001
+anchor_bottom = 0.40100002
+offset_right = -0.53601074
+offset_bottom = 0.15197754
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FondoCarta" type="TextureRect" parent="." unique_id=322779151]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+
+[node name="HuecosLosetas" type="GridContainer" parent="." unique_id=213051064]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+columns = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Slot1" type="Control" parent="HuecosLosetas" unique_id=117499395]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Slot2" type="Control" parent="HuecosLosetas" unique_id=2118507985]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Slot3" type="Control" parent="HuecosLosetas" unique_id=470381203]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Slot4" type="Control" parent="HuecosLosetas" unique_id=1684621086]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3

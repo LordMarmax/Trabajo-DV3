@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://bqkaeij8ofduk"]
+
+[node name="CartaVisual" type="TextureButton" unique_id=2026526379]
+custom_minimum_size = Vector2(180, 250)
+offset_right = 40.0
+offset_bottom = 40.0
+ignore_texture_size = true
