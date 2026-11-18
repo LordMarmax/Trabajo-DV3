@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://2iv5uvjs0w0n"]
+
+[ext_resource type="Script" uid="uid://ouch6fma581h" path="res://scripts/LosetaVisual.cs" id="1_kqu8d"]
+
+[node name="LosetaVisual" type="TextureButton" unique_id=629959378]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_kqu8d")

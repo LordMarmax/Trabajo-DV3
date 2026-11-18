@@ -3,11 +3,20 @@
 [ext_resource type="Texture2D" uid="uid://rknqikcrlvc1" path="res://assets/tablero/tablero.png" id="1_afu8k"]
 [ext_resource type="Script" uid="uid://c3r7msw78pxxg" path="res://scripts/GameManager.cs" id="1_h3ccx"]
 
-[node name="Mundo" type="Node3D" unique_id=1787454190]
+[node name="Mundo" type="Node2D" unique_id=1415472371]
 
 [node name="InterfazJuego" type="CanvasLayer" parent="." unique_id=2140954123]
 
-[node name="FondoTablero" type="TextureRect" parent="InterfazJuego" unique_id=329991472]
+[node name="VistaMercado" type="Control" parent="InterfazJuego" unique_id=571920160]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FondoTablero" type="TextureRect" parent="InterfazJuego/VistaMercado" unique_id=329991472]
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -17,7 +26,9 @@ texture = ExtResource("1_afu8k")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="MercadoUI" type="HBoxContainer" parent="InterfazJuego" unique_id=478600825]
+[node name="MercadoUI" type="HBoxContainer" parent="InterfazJuego/VistaMercado" unique_id=478600825]
+custom_minimum_size = Vector2(627, 271)
+layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 197.0
@@ -25,18 +36,117 @@ offset_top = 98.0
 offset_right = -328.0
 offset_bottom = 369.0
 grow_horizontal = 2
-alignment = 1
+theme_override_constants/separation = 0
 
-[node name="TextoConsola" type="Label" parent="InterfazJuego" unique_id=1592178746]
+[node name="TextoConsola" type="Label" parent="InterfazJuego/VistaMercado" unique_id=1592178746]
+layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -23.0
+offset_top = -49.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Aqui irá el texto
 "
+
+[node name="BtnIrTablero" type="Button" parent="InterfazJuego/VistaMercado" unique_id=82945955]
+layout_mode = 0
+offset_left = 955.0
+offset_right = 1152.0
+offset_bottom = 43.0
+text = "Ver mi Tablero"
+
+[node name="DropFila1" type="Control" parent="InterfazJuego/VistaMercado" unique_id=1826381375]
+anchors_preset = 0
+anchor_left = 0.171875
+anchor_top = 0.58179015
+anchor_right = 0.3454861
+anchor_bottom = 0.9907407
+offset_top = -3.0517578e-05
+metadata/_edit_use_anchors_ = true
+
+[node name="DropFila2" type="Control" parent="InterfazJuego/VistaMercado" unique_id=1946918715]
+anchors_preset = 0
+anchor_left = 0.359375
+anchor_top = 0.5740741
+anchor_right = 0.5338542
+anchor_bottom = 0.98919755
+metadata/_edit_use_anchors_ = true
+
+[node name="DropFila3" type="Control" parent="InterfazJuego/VistaMercado" unique_id=453747634]
+anchors_preset = 0
+anchor_left = 0.5434028
+anchor_top = 0.5771605
+anchor_right = 0.7100694
+anchor_bottom = 0.9830247
+metadata/_edit_use_anchors_ = true
+
+[node name="ManoLosetasUI" type="GridContainer" parent="InterfazJuego/VistaMercado" unique_id=1317145876]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.0026041667
+anchor_top = 0.22222222
+anchor_right = 0.17621528
+anchor_bottom = 0.5308642
+theme_override_constants/h_separation = 0
+columns = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="VistaTableroPersonal" type="Control" parent="InterfazJuego" unique_id=1548390096]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="InterfazJuego/VistaTableroPersonal" unique_id=1079516985]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.57700837, 0.5770084, 0.57700837, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="InterfazJuego/VistaTableroPersonal" unique_id=1635146272]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="InterfazJuego/VistaTableroPersonal/ScrollContainer" unique_id=1101278597]
+layout_mode = 2
+
+[node name="Fila1" type="HBoxContainer" parent="InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer" unique_id=1847021604]
+clip_contents = true
+layout_mode = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Fila2" type="HBoxContainer" parent="InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer" unique_id=990155613]
+clip_contents = true
+layout_mode = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Fila3" type="HBoxContainer" parent="InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer" unique_id=600428734]
+clip_contents = true
+layout_mode = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="BtnVolverMercado" type="Button" parent="InterfazJuego/VistaTableroPersonal" unique_id=1350504304]
+layout_mode = 0
+offset_left = 953.0
+offset_right = 1151.0
+offset_bottom = 45.0
+text = "Volver al mercado"
+
+[node name="DragLayer" type="CanvasLayer" parent="." unique_id=191574455]
+layer = 100
 
 [node name="LogicaJuego" type="Node" parent="." unique_id=149358308]
 script = ExtResource("1_h3ccx")

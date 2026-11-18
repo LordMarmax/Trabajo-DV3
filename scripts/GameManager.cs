@@ -5,122 +5,381 @@ using System.Linq;
 
 public partial class GameManager : Node
 {
-    public List<CardData> TodasLasCartas = new List<CardData>();
     public List<CardData> Mazo = new List<CardData>();
     public List<CardData> Mercado = new List<CardData>();
+    
+    public List<CardData> Fila1 = new List<CardData>();
+    public List<CardData> Fila2 = new List<CardData>();
+    public List<CardData> Fila3 = new List<CardData>();
+    
+    public List<TileData> ManoLosetas = new List<TileData>();
+    
     public int RondaActual = 1;
     private Random rng = new Random();
 
     private HBoxContainer mercadoUI;
+    private GridContainer manoLosetasUI;
     private Label textoConsola;
     private PackedScene cartaVisualScene;
+    private PackedScene losetaVisualScene;
     
-    // NUEVO: Referencia al manager de losetas
-    public TileManager ManagerDeLosetas;
+    private HBoxContainer filaUI1;
+    private HBoxContainer filaUI2;
+    private HBoxContainer filaUI3;
+    
+    private Control vistaMercado;
+    private Control vistaTablero;
+    private Button btnIrTablero;
+    private Button btnVolverMercado;
+    
+    private Control DropFila1;
+    private Control DropFila2;
+    private Control DropFila3;
+    private CanvasLayer DragLayer;
+    
+    // Variables Públicas para que CardVisual y LosetaVisual puedan consultarlas
+    public Control ItemArrastrado = null;
+    private Control DummyOriginal = null;
+    private Vector2 OffsetArrastre;
+    private Control PadreOriginal;
+    private Vector2 PosicionOriginal;
+    private object DataArrastrada;
 
-    // Conseciones.
+    public CardManager ManagerDeCartas;
+    public TileManager ManagerDeLosetas;
     public ConcesionesVerdes ManagerVerdes;
     public ConcesionesRojas ManagerRojas;
 
     public override void _Ready()
     {
-        CargarCartasConstruccion();
+        ManagerDeCartas = new CardManager();
+        AddChild(ManagerDeCartas);
+        ManagerDeCartas.CargarCartas();
         
-        // NUEVO: Instanciamos y cargamos las losetas desde el código de tu amigo
         ManagerDeLosetas = new TileManager();
-        AddChild(ManagerDeLosetas); // Lo agregamos al árbol de Godot
+        AddChild(ManagerDeLosetas);
         ManagerDeLosetas.CargarLosetas();
 
-
-        //Incializar las Concesiones verdes
         ManagerVerdes = new ConcesionesVerdes();
         AddChild(ManagerVerdes);
         ManagerVerdes.CargarCartas();
 
-        //Inicializar las Concesiones rojas
         ManagerRojas = new ConcesionesRojas();
         AddChild(ManagerRojas);
         ManagerRojas.CargarCartas();
-        /*Nota:
-            El GameManager podrá acceder a los datos mediante:
-                
-                ConcessionData verde = ManagerVerdes.ObtenerCarta("Carta_001");
-        */
-
 
         cartaVisualScene = GD.Load<PackedScene>("res://escenas/CartaVisual.tscn");
-        mercadoUI = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/MercadoUI");
-        textoConsola = GetNode<Label>("/root/Mundo/InterfazJuego/TextoConsola");
+        losetaVisualScene = GD.Load<PackedScene>("res://escenas/LosetaVisual.tscn");
         
+        vistaMercado = GetNode<Control>("/root/Mundo/InterfazJuego/VistaMercado");
+        vistaTablero = GetNode<Control>("/root/Mundo/InterfazJuego/VistaTableroPersonal");
+        
+        mercadoUI = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaMercado/MercadoUI");
+        manoLosetasUI = GetNode<GridContainer>("/root/Mundo/InterfazJuego/VistaMercado/ManoLosetasUI");
+        textoConsola = GetNode<Label>("/root/Mundo/InterfazJuego/VistaMercado/TextoConsola");
+        
+        btnIrTablero = GetNode<Button>("/root/Mundo/InterfazJuego/VistaMercado/BtnIrTablero");
+        btnVolverMercado = GetNode<Button>("/root/Mundo/InterfazJuego/VistaTableroPersonal/BtnVolverMercado");
+        DragLayer = GetNode<CanvasLayer>("/root/Mundo/DragLayer");
+
+        DropFila1 = GetNode<Control>("/root/Mundo/InterfazJuego/VistaMercado/DropFila1");
+        DropFila2 = GetNode<Control>("/root/Mundo/InterfazJuego/VistaMercado/DropFila2");
+        DropFila3 = GetNode<Control>("/root/Mundo/InterfazJuego/VistaMercado/DropFila3");
+
+        btnIrTablero.Pressed += () => CambiarVista(true);
+        btnVolverMercado.Pressed += () => CambiarVista(false);
+
+        filaUI1 = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer/Fila1");
+        filaUI2 = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer/Fila2");
+        filaUI3 = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer/Fila3");
+        
+        CambiarVista(false);
         IniciarPartida();
+    }
+
+    public void IniciarArrastre(Control item, Control padre, Vector2 posOriginal, object data, Vector2 localMousePos)
+    {
+        if (ItemArrastrado != null) return; // Seguridad extra
+
+        ItemArrastrado = item;
+        PadreOriginal = padre;
+        PosicionOriginal = posOriginal;
+        DataArrastrada = data;
+
+        DummyOriginal = new Control();
+        DummyOriginal.CustomMinimumSize = item.CustomMinimumSize;
+        DummyOriginal.SizeFlagsHorizontal = item.SizeFlagsHorizontal;
+        DummyOriginal.SizeFlagsVertical = item.SizeFlagsVertical;
+
+        int index = item.GetIndex();
+        padre.RemoveChild(item);
+        padre.AddChild(DummyOriginal);
+        padre.MoveChild(DummyOriginal, index);
+
+        DragLayer.AddChild(item);
+        
+        if (item is CardVisual) item.CustomMinimumSize = new Vector2(209, 271);
+        else if (item is LosetaVisual) item.CustomMinimumSize = new Vector2(100, 100);
+
+        OffsetArrastre = localMousePos;
+        item.GlobalPosition = GetViewport().GetMousePosition() - OffsetArrastre;
+        
+        Input.SetDefaultCursorShape(Input.CursorShape.Drag);
+    }
+
+    public override void _Process(double delta)
+    {
+        if (ItemArrastrado != null)
+        {
+            // Si el ratón ya NO está presionado, procesamos el drop inmediatamente
+            if (!Input.IsMouseButtonPressed(MouseButton.Left))
+            {
+                ProcesarSoltar();
+                return;
+            }
+
+            ItemArrastrado.GlobalPosition = GetViewport().GetMousePosition() - OffsetArrastre;
+            
+            Vector2 mousePos = GetViewport().GetMousePosition();
+            bool esCarta = DataArrastrada is CardData;
+            bool overValid = false;
+
+            if (esCarta)
+            {
+                if (DropFila1.GetGlobalRect().HasPoint(mousePos)) overValid = true;
+                else if (DropFila2.GetGlobalRect().HasPoint(mousePos)) overValid = true;
+                else if (DropFila3.GetGlobalRect().HasPoint(mousePos)) overValid = true;
+            }
+
+            if (overValid)
+                Input.SetDefaultCursorShape(Input.CursorShape.Drag); 
+            else
+                Input.SetDefaultCursorShape(Input.CursorShape.Forbidden); 
+        }
+    }
+
+    private void ProcesarSoltar()
+    {
+        Vector2 mousePos = GetViewport().GetMousePosition();
+        int filaDestino = -1;
+
+        if (DataArrastrada is CardData)
+        {
+            if (DropFila1.GetGlobalRect().HasPoint(mousePos)) filaDestino = 1;
+            else if (DropFila2.GetGlobalRect().HasPoint(mousePos)) filaDestino = 2;
+            else if (DropFila3.GetGlobalRect().HasPoint(mousePos)) filaDestino = 3;
+        }
+
+        if (filaDestino != -1)
+        {
+            CardData carta = (CardData)DataArrastrada;
+            if (ValidarColocacion(carta, filaDestino))
+            {
+                var itemParaDestruir = ItemArrastrado;
+                ItemArrastrado = null; 
+                
+                if (DummyOriginal != null) { DummyOriginal.QueueFree(); DummyOriginal = null; }
+                itemParaDestruir.QueueFree();
+
+                SoltarCartaEnFila(carta, filaDestino);
+            }
+            else
+            {
+                DevolverCarta();
+            }
+        }
+        else
+        {
+            DevolverCarta();
+        }
+        Input.SetDefaultCursorShape(Input.CursorShape.Arrow);
+    }
+
+    private bool ValidarColocacion(CardData carta, int fila)
+    {
+        List<CardData> filaElegida = (fila == 1) ? Fila1 : (fila == 2) ? Fila2 : Fila3;
+        if (filaElegida.Count > 0)
+        {
+            CardData ultimaCarta = filaElegida.Last();
+            if (carta.Level < ultimaCarta.Level)
+            {
+                if (textoConsola != null)
+                {
+                    textoConsola.Text = "¡Error! Orden ascendente incorrecto.";
+                    Tween tweenError = CreateTween();
+                    tweenError.TweenProperty(textoConsola, "modulate", Colors.Red, 0.1f);
+                    tweenError.TweenProperty(textoConsola, "modulate", Colors.White, 0.2f);
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void DevolverCarta()
+    {
+        Tween tween = CreateTween();
+        tween.TweenProperty(ItemArrastrado, "global_position", DummyOriginal.GlobalPosition, 0.25f)
+            .SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+        
+        tween.TweenCallback(Callable.From(() => {
+            if (ItemArrastrado == null) return; // Seguridad por si algo lo borró
+
+            ItemArrastrado.GetParent().RemoveChild(ItemArrastrado);
+            DummyOriginal.GetParent().AddChild(ItemArrastrado);
+            DummyOriginal.GetParent().MoveChild(ItemArrastrado, DummyOriginal.GetIndex());
+            
+            ItemArrastrado.GlobalPosition = PosicionOriginal;
+            
+            DummyOriginal.QueueFree();
+            DummyOriginal = null;
+            ItemArrastrado = null;
+        }));
+    }
+
+    private void CambiarVista(bool mostrarTablero)
+    {
+        vistaMercado.Visible = !mostrarTablero;
+        vistaTablero.Visible = mostrarTablero;
     }
 
     private void IniciarPartida()
     {
-        Mazo = TodasLasCartas.OrderBy(x => rng.Next()).ToList();
-        
-        for (int i = 0; i < 3; i++)
-        {
-            RobarCartaAlMercado();
-        }
-        
+        Mazo = ManagerDeCartas.TodasLasCartas.OrderBy(x => rng.Next()).ToList();
+        LlenarMercado();
         ImprimirMercado();
+        ImprimirManoLosetas();
     }
 
-    private void RobarCartaAlMercado()
+    private void LlenarMercado()
     {
-        if (Mazo.Count > 0)
-        {
-            Mercado.Add(Mazo[0]);
-            Mazo.RemoveAt(0);
-        }
-    }
-
-    private void SeleccionarCarta(int indexCartaJugador)
-    {
-        if (Mercado.Count < 3) return;
-
-        CardData cartaJugador = Mercado[indexCartaJugador];
-        
-        GD.Print("=========================================");
-        GD.Print($"RONDA {RondaActual} - TÚ TOMAS: {cartaJugador.CardId} (Nivel {cartaJugador.Level})");
-        
-        // Imprimimos la lista de espacios que acabamos de guardar en variables
-        GD.Print("   DATOS ALMACENADOS EN MEMORIA:");
-        foreach (var espacio in cartaJugador.Spaces)
-        {
-            string estado = espacio.IsOccupied ? "OCUPADO" : "LIBRE";
-            GD.Print($"   -> [{estado}] Pos: {espacio.Position,-10} | Forma: {espacio.Shape,-5} | Contenido: {espacio.Content}");
-        }
-        
-        int indexBot = (indexCartaJugador != 2) ? 2 : 1;
-        CardData cartaBot = Mercado[indexBot];
-        GD.Print($"[AUTÓMATA] Harrington & Sons toma: {cartaBot.CardId} (Nivel {cartaBot.Level})");
-        
-        int indexDescartada = 3 - indexCartaJugador - indexBot; 
-        GD.Print($"[DESCARTE] Se va a la pila: {Mercado[indexDescartada].CardId}");
-        GD.Print("=========================================\n");
-        
-        if (textoConsola != null)
-        {
-            textoConsola.Text = $"Tomaste: {cartaJugador.CardId} (Nivel {cartaJugador.Level})";
-        }
-
         Mercado.Clear();
         for (int i = 0; i < 3; i++)
         {
-            RobarCartaAlMercado();
+            if (Mazo.Count > 0)
+            {
+                Mercado.Add(Mazo[0]);
+                Mazo.RemoveAt(0);
+            }
         }
+    }
 
+    private void RobarLosetas()
+    {
+        ManoLosetas.Clear();
+        int cantidadLosetas = (RondaActual - 1) % 4 + 1;
+        
+        for (int i = 0; i < cantidadLosetas; i++)
+        {
+            if (ManagerDeLosetas.TodasLasLosetas.Count > 0)
+            {
+                int randomIndex = rng.Next(ManagerDeLosetas.TodasLasLosetas.Count);
+                ManoLosetas.Add(ManagerDeLosetas.TodasLasLosetas[randomIndex]);
+            }
+        }
+    }
+
+    public void SoltarCartaEnFila(CardData cartaArrastrada, int numeroFila)
+    {
+        GD.Print("=========================================");
+        GD.Print($"[TÚ] Tomas la carta: {cartaArrastrada.CardId} (Nivel {cartaArrastrada.Level})");
+        GD.Print("=========================================\n");
+        
+        Mercado.Remove(cartaArrastrada);
+        ImprimirMercado();
+        
+        EjecutarAnimacionColocacion(cartaArrastrada, numeroFila);
+    }
+
+    private void EjecutarAnimacionColocacion(CardData carta, int numeroFila)
+    {
+        Tween tweenEspera = CreateTween();
+        tweenEspera.TweenInterval(0.1f);
+        tweenEspera.TweenCallback(Callable.From(() => {
+            CambiarVista(true);
+            
+            if (numeroFila == 1) Fila1.Add(carta);
+            else if (numeroFila == 2) Fila2.Add(carta);
+            else Fila3.Add(carta);
+            
+            ActualizarInterfazTablero(carta);
+            
+            HBoxContainer filaActual = (numeroFila == 1) ? filaUI1 : (numeroFila == 2) ? filaUI2 : filaUI3;
+            Control wrapper = (Control)filaActual.GetChild(filaActual.GetChildCount() - 1);
+            TextureRect imagenReal = (TextureRect)wrapper.GetChild(0);
+            
+            Tween tweenCrecimiento = CreateTween();
+            tweenCrecimiento.TweenProperty(imagenReal, "scale", Vector2.One, 0.4f)
+                .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+            
+            tweenCrecimiento.TweenInterval(0.5f);
+            tweenCrecimiento.TweenCallback(Callable.From(() => {
+                SiguienteRonda();
+            }));
+        }));
+    }
+
+    private void SiguienteRonda()
+    {
+        if (Mercado.Count > 0)
+        {
+            CardData cartaBot = Mercado.Last();
+            GD.Print("=========================================");
+            GD.Print($"[AUTÓMATA] Harrington & Sons toma: {cartaBot.CardId} (Nivel {cartaBot.Level})");
+            GD.Print("=========================================\n");
+            Mercado.Remove(cartaBot);
+        }
+        
+        LlenarMercado();
         RondaActual++;
-
-        if (RondaActual <= 12)
+        
+        if (Mercado.Count == 0)
         {
-            ImprimirMercado();
+            if (textoConsola != null) textoConsola.Text = "FIN DEL JUEGO (Mazo vacío)";
+            CambiarVista(false);
+            return;
         }
-        else
+
+        RobarLosetas();
+        ImprimirMercado();
+        ImprimirManoLosetas();
+        
+        if (textoConsola != null) textoConsola.Text = $"Ronda {RondaActual} / 12 - Arrastra una carta a tu tablero.";
+        CambiarVista(false);
+    }
+
+    private void ActualizarInterfazTablero(CardData cartaNueva = null)
+    {
+        foreach (Node hijo in filaUI1.GetChildren()) if (hijo is Control && !(hijo is HBoxContainer)) hijo.QueueFree();
+        foreach (Node hijo in filaUI2.GetChildren()) if (hijo is Control && !(hijo is HBoxContainer)) hijo.QueueFree();
+        foreach (Node hijo in filaUI3.GetChildren()) if (hijo is Control && !(hijo is HBoxContainer)) hijo.QueueFree();
+
+        DibujarCartasEnFila(Fila1, filaUI1, cartaNueva);
+        DibujarCartasEnFila(Fila2, filaUI2, cartaNueva);
+        DibujarCartasEnFila(Fila3, filaUI3, cartaNueva);
+    }
+
+    private void DibujarCartasEnFila(List<CardData> lista, HBoxContainer filaUI, CardData cartaNueva)
+    {
+        foreach (CardData carta in lista)
         {
-            if (textoConsola != null) textoConsola.Text = "FIN DEL JUEGO";
+            Control wrapper = new Control();
+            wrapper.CustomMinimumSize = new Vector2(130, 180);
+
+            TextureRect visual = new TextureRect();
+            visual.Texture = carta.CardImage;
+            visual.CustomMinimumSize = new Vector2(130, 180);
+            visual.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
+            visual.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered; 
+            visual.PivotOffset = new Vector2(65, 90); 
+            
+            if (carta == cartaNueva)
+                visual.Scale = Vector2.Zero; 
+            else
+                visual.Scale = Vector2.One;
+
+            wrapper.AddChild(visual);
+            filaUI.AddChild(wrapper);
         }
     }
 
@@ -128,157 +387,52 @@ public partial class GameManager : Node
     {
         if (mercadoUI != null)
         {
-            foreach (Node hijo in mercadoUI.GetChildren()) hijo.QueueFree();
+            foreach (Node hijo in mercadoUI.GetChildren()) 
+            {
+                if (hijo is CardVisual) hijo.QueueFree();
+            }
 
             for (int i = 0; i < Mercado.Count; i++)
             {
-                TextureButton nuevaCartaVisual = cartaVisualScene.Instantiate<TextureButton>();
+                CardVisual nuevaCartaVisual = cartaVisualScene.Instantiate<CardVisual>();
+                nuevaCartaVisual.TextureNormal = Mercado[i].CardImage;
+                nuevaCartaVisual.Data = Mercado[i];
                 
-                if (nuevaCartaVisual != null)
-                {
-                    nuevaCartaVisual.TextureNormal = Mercado[i].CardImage;
-                    nuevaCartaVisual.CustomMinimumSize = new Vector2(180, 250); 
-                    nuevaCartaVisual.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-                    nuevaCartaVisual.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
-                    nuevaCartaVisual.IgnoreTextureSize = true; 
-                    nuevaCartaVisual.StretchMode = TextureButton.StretchModeEnum.Scale;
-                    
-                    int indexActual = i; 
-                    nuevaCartaVisual.Pressed += () => SeleccionarCarta(indexActual);
-                    
-                    mercadoUI.AddChild(nuevaCartaVisual);
-                }
+                nuevaCartaVisual.CustomMinimumSize = new Vector2(209, 271); 
+                nuevaCartaVisual.Size = new Vector2(209, 271);
+                nuevaCartaVisual.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+                nuevaCartaVisual.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
+                
+                nuevaCartaVisual.IgnoreTextureSize = true; 
+                nuevaCartaVisual.StretchMode = TextureButton.StretchModeEnum.KeepAspectCentered;
+                nuevaCartaVisual.CardIndex = i;
+                
+                mercadoUI.AddChild(nuevaCartaVisual);
             }
         }
     }
 
-    private void CargarCartasConstruccion()
+    private void ImprimirManoLosetas()
     {
-        string rutaBase = "res://assets/cartas_construcción/";
-        
-        Dictionary<string, (int Level, string Desc)> mapaCartas = new Dictionary<string, (int, string)>
+        if (manoLosetasUI != null)
         {
-            {"carta(1)", (9, "Ocup: Astro(Inf-Der) | Libre: 2x1V(Der), 1x1(Sup-Izq)")},
-            {"carta(2)", (8, "Ocup: Cráter ⚫(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(3)", (8, "Ocup: Hábitat ❤️(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(4)", (8, "Ocup: Cráter ⚫(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(5)", (8, "Ocup: Edif.Azul ❤️(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(6)", (7, "Ocup: Cráter ⚫(Sup-Izq), Astro(Sup-Der) | Libre: 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(7)", (7, "Ocup: Astro(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(8)", (7, "Ocup: Astro(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(9)", (6, "Ocup: Astro(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(10)", (4, "Ocup: Cráter ⚫(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(11)", (4, "Ocup: Astro(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(12)", (3, "Ocup: Edif.Azul ❤️(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(13)", (3, "Ocup: Astro(Inf-Izq), Invernadero ❤️(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der)")},
-            {"carta(14)", (3, "Ocup: Astro(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(15)", (2, "Ocup: Astro(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(16)", (2, "Ocup: Edif.Azul ❤️(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(17)", (2, "Ocup: Cráter ⚫(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(18)", (2, "Ocup: Astro ❤️(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(19)", (2, "Ocup: Hábitat ❤️(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(20)", (1, "Ocup: Agua ❤️(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(21)", (1, "Ocup: Cráter ⚫(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(22)", (1, "Ocup: Invernadero S(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(23)", (1, "Ocup: Astro(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(24)", (1, "Ocup: Cráter ⚫(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(25)", (1, "Ocup: Hábitat ❤️(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(26)", (10, "Ocup: Agua ❤️(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(27)", (10, "Ocup: Invernadero ❤️(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(28)", (10, "Ocup: Astro(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(29)", (10, "Ocup: Agua ❤️(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(30)", (10, "Ocup: Invernadero ❤️(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(31)", (9, "Ocup: Cráter ⚫(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(32)", (9, "Ocup: Hábitat ❤️(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(33)", (9, "Ocup: Invernadero S(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(34)", (9, "Ocup: Cráter ⚫(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(35)", (9, "Ocup: Astro(Inf-Izq) | Libre: 2x1H(Sup), 1x1(Inf-Der)")},
-            {"carta(36)", (9, "Ocup: Astro(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(37)", (9, "Ocup: Edif.Azul ❤️(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(38)", (8, "Ocup: Astro(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(39)", (8, "Ocup: Astro(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(40)", (8, "Ocup: Astro(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(41)", (7, "Ocup: Cráter ⚫(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(42)", (6, "Ocup: Cráter ⚫(Sup-Izq), Astro(Inf-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(43)", (6, "Ocup: Cráter ⚫(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(44)", (5, "Ocup: Astro(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(45)", (5, "Ocup: Astro(Sup-Der), Cráter ⚫(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq)")},
-            {"carta(46)", (4, "Ocup: Astro(Inf-Izq), Cráter ⚫(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der)")},
-            {"carta(47)", (3, "Ocup: Astro(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(48)", (3, "Ocup: Cráter ⚫(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(49)", (3, "Ocup: Cráter ⚫(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(50)", (3, "Ocup: Astro(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(51)", (2, "Ocup: Invernadero ❤️(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(52)", (2, "Ocup: Astro(Inf-Der) | Libre: 2x1H(Sup), 1x1(Inf-Izq)")},
-            {"carta(53)", (2, "Ocup: Cráter ⚫(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(54)", (2, "Ocup: Cráter ⚫(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(55)", (1, "Ocup: Astro(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(56)", (1, "Ocup: Cráter ⚫(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(57)", (1, "Ocup: Agua ❤️(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(58)", (1, "Ocup: Invernadero ❤️(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(59)", (1, "Ocup: Satélite S(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(60)", (10, "Ocup: Cráter ⚫(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(61)", (10, "Ocup: Invernadero ❤️(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(62)", (10, "Ocup: Satélite S(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(63)", (10, "Ocup: Cráter ⚫(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
-            {"carta(64)", (10, "Ocup: Astro(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
-            {"carta(65)", (9, "Ocup: Cráter ⚫(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")}
-        };
-        
-        foreach (var item in mapaCartas)
-        {
-            Texture2D textura = GD.Load<Texture2D>(rutaBase + item.Key + ".png");
-            if (textura != null)
+            foreach (Node hijo in manoLosetasUI.GetChildren()) hijo.QueueFree();
+
+            for (int i = 0; i < ManoLosetas.Count; i++)
             {
-                CardData nuevaCarta = new CardData();
-                nuevaCarta.CardId = item.Key;
-                nuevaCarta.Level = item.Value.Level;
-                nuevaCarta.Description = item.Value.Desc;
-                nuevaCarta.CardImage = textura;
+                LosetaVisual nuevaLoseta = losetaVisualScene.Instantiate<LosetaVisual>();
+                nuevaLoseta.TextureNormal = ManoLosetas[i].TileImage;
+                nuevaLoseta.Data = ManoLosetas[i];
                 
-                ProcesarEspaciosCarta(nuevaCarta);
+                nuevaLoseta.CustomMinimumSize = new Vector2(100, 100);
+                nuevaLoseta.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+                nuevaLoseta.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
                 
-                TodasLasCartas.Add(nuevaCarta);
-            }
-        }
-    }
+                nuevaLoseta.IgnoreTextureSize = true;
+                nuevaLoseta.StretchMode = TextureButton.StretchModeEnum.KeepAspectCentered; 
+                nuevaLoseta.TileIndex = i;
 
-    private void ProcesarEspaciosCarta(CardData carta)
-    {
-        string desc = carta.Description;
-        string[] partes = desc.Split(" | ");
-
-        if (partes[0].StartsWith("Ocup: "))
-        {
-            string ocupados = partes[0].Replace("Ocup: ", "");
-            string[] items = ocupados.Split(", ");
-            foreach (var item in items)
-            {
-                int abre = item.IndexOf('(');
-                int cierra = item.IndexOf(')');
-                if (abre != -1 && cierra != -1)
-                {
-                    string contenido = item.Substring(0, abre).Trim();
-                    string posicion = item.Substring(abre + 1, cierra - abre - 1);
-                    carta.Spaces.Add(new CardSpace(posicion, "1x1", contenido, true));
-                }
-            }
-        }
-
-        if (partes.Length > 1 && partes[1].StartsWith("Libre: "))
-        {
-            string libres = partes[1].Replace("Libre: ", "");
-            string[] items = libres.Split(", ");
-            foreach (var item in items)
-            {
-                int abre = item.IndexOf('(');
-                int cierra = item.IndexOf(')');
-                if (abre != -1 && cierra != -1)
-                {
-                    string forma = item.Substring(0, abre).Trim();
-                    string posicion = item.Substring(abre + 1, cierra - abre - 1);
-                    carta.Spaces.Add(new CardSpace(posicion, forma, "Empty", false));
-                }
+                manoLosetasUI.AddChild(nuevaLoseta);
             }
         }
     }
