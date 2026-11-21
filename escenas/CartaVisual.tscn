@@ -3,8 +3,8 @@
 [ext_resource type="Script" uid="uid://cykd0wd5p5kt5" path="res://scripts/CardVisual.cs" id="1_dptuc"]
 
 [node name="CartaVisual" type="TextureButton" unique_id=2026526379]
-custom_minimum_size = Vector2(180, 250)
 offset_right = 40.0
 offset_bottom = 40.0
 ignore_texture_size = true
+stretch_mode = 2
 script = ExtResource("1_dptuc")

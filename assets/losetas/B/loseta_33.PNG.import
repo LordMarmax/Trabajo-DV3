@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://m8ebnsor0b37"
-path="res://.godot/imported/loseta_33.PNG-12bf2537b4ea075c60138fff14af2e4d.ctex"
+uid="uid://v47yaxae0ga"
+path="res://.godot/imported/loseta_33.png-ad990430a4b837e5a1f1a280f7fb0858.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/losetas/B/loseta_33.PNG"
-dest_files=["res://.godot/imported/loseta_33.PNG-12bf2537b4ea075c60138fff14af2e4d.ctex"]
+source_file="res://assets/losetas/B/loseta_33.png"
+dest_files=["res://.godot/imported/loseta_33.png-ad990430a4b837e5a1f1a280f7fb0858.ctex"]
 
 [params]
 

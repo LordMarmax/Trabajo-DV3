@@ -1,5 +1,7 @@
 [gd_scene format=3 uid="uid://dm8lwf65rijit"]
 
+[ext_resource type="Script" path="res://scripts/CartaTablero.cs" id="1_ctcs"]
+
 [node name="CartaTablero" type="Control" unique_id=483796086]
 custom_minimum_size = Vector2(130, 180)
 clip_contents = true
@@ -10,6 +12,7 @@ offset_right = -0.53601074
 offset_bottom = 0.15197754
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_ctcs")
 
 [node name="FondoCarta" type="TextureRect" parent="." unique_id=322779151]
 layout_mode = 1
