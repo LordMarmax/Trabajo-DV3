@@ -9,12 +9,8 @@ public partial class CardVisual : TextureButton
     {
         if (@event is InputEventMouseButton mouseEvent && mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed)
         {
-            // Si el padre es un CanvasLayer, significa que se quedó atascada en el limbo
-            if (GetParent() is CanvasLayer) return; 
-
             var gm = GetNode<GameManager>("/root/Mundo/LogicaJuego");
-            if (gm.ItemArrastrado != null) return; // Evitar arrastrar más de una a la vez
-
+            if (gm.ItemArrastrado != null) return;
             gm.IniciarArrastre(this, GetParent<Control>(), GlobalPosition, Data, mouseEvent.Position);
             AcceptEvent();
         }

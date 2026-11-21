@@ -6,53 +6,55 @@ public partial class TileManager : Node
 {
     public List<TileData> TodasLasLosetas = new List<TileData>();
 
-    public void CargarLosetas()
+    // Ahora recibe un string con la fase ("A", "B" o "C")
+    public void CargarLosetas(string fase = "A")
     {
-        string rutaBase = "res://assets/losetas/";
+        // Limpiamos la lista por si se vuelve a llamar (ej. al cambiar de fase)
+        TodasLasLosetas.Clear();
+
+        // Construimos la ruta dinámicamente
+        string rutaBase = $"res://assets/losetas/{fase}/";
         
-        // Diccionario con el nombre del archivo, su tipo y una descripción
         Dictionary<string, (TileData.TileType Type, string Desc)> mapaLosetas = new Dictionary<string, (TileData.TileType, string)>
         {
-            // --- Image 1 ---
-            {"carta_01(1)", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
-            {"carta_01(2)", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
-            {"carta_01(3)", (TileData.TileType.Special, "Edificio Azul (❤️ + 💎)")},
-            {"carta_01(4)", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
-            {"carta_01", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
-            {"carta_02(1)", (TileData.TileType.Special, "Rover (Especial)")},
-            {"carta_02(2)", (TileData.TileType.Energy, "Panel Solar (⚡)")},
-            {"carta_02(3)", (TileData.TileType.Energy, "Satélite ($)")},
-            {"carta_02(4)", (TileData.TileType.Special, "Módulo (+2 ❤️)")},
-            {"carta_02", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
-            {"carta_03(1)", (TileData.TileType.Blackhole, "Asteroide (⚫)")},
-            {"carta_03(2)", (TileData.TileType.Energy, "Satélite ($)")},
-            {"carta_03(3)", (TileData.TileType.Heart, "Tanque Agua (❤️)")},
-            {"carta_03(4)", (TileData.TileType.Special, "Módulo (+2 ❤️)")},
-            {"carta_03", (TileData.TileType.Heart, "Invernadero (❤️ Rosa)")},
-            {"carta_04(1)", (TileData.TileType.Special, "Módulo (+2 ❤️)")},
-            {"carta_04(2)", (TileData.TileType.Energy, "Satélite ($)")},
-            {"carta_04(3)", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
-            
-            // --- Image 2 ---
-            {"carta_04(4)", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧)")},
-            {"carta_04", (TileData.TileType.Special, "Hábitat Robot (❤️ + 💧)")},
-            {"carta_05(1)", (TileData.TileType.Heart, "Edificio Azul (❤️)")},
-            {"carta_05(2)", (TileData.TileType.Energy, "Satélite ($)")},
-            {"carta_05(3)", (TileData.TileType.Heart, "Invernadero (❤️ Rosa)")},
-            {"carta_05(4)", (TileData.TileType.Blackhole, "Asteroide (⚫)")},
-            {"carta_05", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
-            {"carta_06(1)", (TileData.TileType.Hazard, "Excavadora (⚠️)")},
-            {"carta_06(2)", (TileData.TileType.Hazard, "Triángulo Peligro (⚠️)")},
-            {"carta_06(3)", (TileData.TileType.Hazard, "Excavadora (⚠️)")},
-            {"carta_06", (TileData.TileType.Special, "Módulo (+2 ❤️)")},
-            {"carta_07(1)", (TileData.TileType.Heart, "Invernadero (❤️ Naranja)")},
-            {"carta_07(2)", (TileData.TileType.Heart, "Invernadero (❤️ Rosa)")},
-            {"carta_07(3)", (TileData.TileType.Special, "Invernadero (❤️ + 💧)")},
-            {"carta_07", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧)")}
+            {"loseta_01", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧 + $)")},
+            {"loseta_02", (TileData.TileType.Energy, "Satélite ($)")},
+            {"loseta_03", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
+            {"loseta_04", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
+            {"loseta_05", (TileData.TileType.Heart, "Invernadero (❤️ Verde)")},
+            {"loseta_06", (TileData.TileType.Hazard, "Triángulo Peligro (⚠️)")},
+            {"loseta_07", (TileData.TileType.Heart, "Invernadero (❤️ Verde)")},
+            {"loseta_08", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
+            {"loseta_09", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
+            {"loseta_10", (TileData.TileType.Heart, "Invernadero (❤️ Verde)")},
+            {"loseta_11", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
+            {"loseta_12", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
+            {"loseta_13", (TileData.TileType.Special, "Módulo (+2 ❤️)")},
+            {"loseta_14", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧)")},
+            {"loseta_15", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
+            {"loseta_16", (TileData.TileType.Energy, "Panel Solar (⚡ doble)")},
+            {"loseta_17", (TileData.TileType.Energy, "Satélite ($)")},
+            {"loseta_18", (TileData.TileType.Energy, "Satélite ($)")},
+            {"loseta_19", (TileData.TileType.Energy, "Satélite ($)")},
+            {"loseta_20", (TileData.TileType.Hazard, "Excavadora (⚠️)")},
+            {"loseta_21", (TileData.TileType.Heart, "Invernadero (❤️ Naranja)")},
+            {"loseta_22", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
+            {"loseta_23", (TileData.TileType.Special, "Módulo (+2 ❤️)")},
+            {"loseta_24", (TileData.TileType.Special, "Módulo (+2 ⚫)")},
+            {"loseta_25", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧)")},
+            {"loseta_26", (TileData.TileType.Blackhole, "Asteroide (⚫)")},
+            {"loseta_27", (TileData.TileType.Hazard, "Excavadora (⚠️)")},
+            {"loseta_28", (TileData.TileType.Heart, "Invernadero (❤️ Amarillo)")},
+            {"loseta_29", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
+            {"loseta_30", (TileData.TileType.Special, "Rover (Especial)")},
+            {"loseta_31", (TileData.TileType.Blackhole, "Asteroide (⚫)")},
+            {"loseta_32", (TileData.TileType.Special, "Módulo (+2 ⚫)")},
+            {"loseta_33", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧)")}
         };
 
         foreach (var item in mapaLosetas)
         {
+            // Carga desde la carpeta de la fase actual (ej: res://assets/losetas/A/loseta_01.png)
             Texture2D textura = GD.Load<Texture2D>(rutaBase + item.Key + ".png");
             if (textura != null)
             {
@@ -65,10 +67,10 @@ public partial class TileManager : Node
             }
             else
             {
-                GD.PrintErr($"No se encontró la loseta: {item.Key}.png");
+                GD.PrintErr($"No se encontró la loseta: {rutaBase + item.Key}.png");
             }
         }
         
-        GD.Print($"¡Carga de losetas completada! Total: {TodasLasLosetas.Count}");
+        GD.Print($"¡Carga de losetas completada! Fase: {fase} | Total: {TodasLasLosetas.Count}");
     }
 }

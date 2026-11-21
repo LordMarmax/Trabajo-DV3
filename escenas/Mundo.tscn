@@ -17,26 +17,55 @@ grow_vertical = 2
 
 [node name="FondoTablero" type="TextureRect" parent="InterfazJuego/VistaMercado" unique_id=329991472]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = -1
+anchor_left = 0.066840276
+anchor_top = 0.22222222
+anchor_right = 0.8767361
+anchor_bottom = 1.0771605
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("1_afu8k")
 expand_mode = 1
-stretch_mode = 6
+stretch_mode = 5
+metadata/_edit_use_anchors_ = true
 
 [node name="MercadoUI" type="HBoxContainer" parent="InterfazJuego/VistaMercado" unique_id=478600825]
-custom_minimum_size = Vector2(627, 271)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 197.0
-offset_top = 98.0
-offset_right = -328.0
-offset_bottom = 369.0
+offset_left = 268.0
+offset_top = 262.0
+offset_right = -429.0
+offset_bottom = 450.0
 grow_horizontal = 2
 theme_override_constants/separation = 0
+
+[node name="Columna1" type="VBoxContainer" parent="InterfazJuego/VistaMercado/MercadoUI" unique_id=516249879]
+layout_mode = 2
+
+[node name="SlotCarta" type="Control" parent="InterfazJuego/VistaMercado/MercadoUI/Columna1" unique_id=1998232887]
+layout_mode = 2
+
+[node name="SlotLoseta" type="Control" parent="InterfazJuego/VistaMercado/MercadoUI/Columna1" unique_id=450428157]
+layout_mode = 2
+
+[node name="Columna2" type="VBoxContainer" parent="InterfazJuego/VistaMercado/MercadoUI" unique_id=1520895772]
+layout_mode = 2
+
+[node name="SlotCarta" type="Control" parent="InterfazJuego/VistaMercado/MercadoUI/Columna2" unique_id=122092881]
+layout_mode = 2
+
+[node name="SlotLoseta" type="Control" parent="InterfazJuego/VistaMercado/MercadoUI/Columna2" unique_id=1302902656]
+layout_mode = 2
+
+[node name="Columna3" type="VBoxContainer" parent="InterfazJuego/VistaMercado/MercadoUI" unique_id=136290482]
+layout_mode = 2
+
+[node name="SlotCarta" type="Control" parent="InterfazJuego/VistaMercado/MercadoUI/Columna3" unique_id=692229741]
+layout_mode = 2
+
+[node name="SlotLoseta" type="Control" parent="InterfazJuego/VistaMercado/MercadoUI/Columna3" unique_id=1309107348]
+layout_mode = 2
 
 [node name="TextoConsola" type="Label" parent="InterfazJuego/VistaMercado" unique_id=1592178746]
 layout_mode = 1
@@ -52,47 +81,96 @@ text = "Aqui irá el texto
 
 [node name="BtnIrTablero" type="Button" parent="InterfazJuego/VistaMercado" unique_id=82945955]
 layout_mode = 0
-offset_left = 955.0
-offset_right = 1152.0
-offset_bottom = 43.0
+anchor_left = 0.8342014
+anchor_top = 0.0015432099
+anchor_right = 1.0052084
+anchor_bottom = 0.06790123
 text = "Ver mi Tablero"
+metadata/_edit_use_anchors_ = true
 
 [node name="DropFila1" type="Control" parent="InterfazJuego/VistaMercado" unique_id=1826381375]
-anchors_preset = 0
-anchor_left = 0.171875
-anchor_top = 0.58179015
-anchor_right = 0.3454861
-anchor_bottom = 0.9907407
+layout_mode = 1
+anchor_left = 0.24479167
+anchor_top = 0.70216054
+anchor_right = 0.36458334
+anchor_bottom = 0.9953704
 offset_top = -3.0517578e-05
 metadata/_edit_use_anchors_ = true
 
 [node name="DropFila2" type="Control" parent="InterfazJuego/VistaMercado" unique_id=1946918715]
-anchors_preset = 0
-anchor_left = 0.359375
-anchor_top = 0.5740741
-anchor_right = 0.5338542
+layout_mode = 1
+anchor_left = 0.375
+anchor_top = 0.69753087
+anchor_right = 0.4956597
 anchor_bottom = 0.98919755
 metadata/_edit_use_anchors_ = true
 
 [node name="DropFila3" type="Control" parent="InterfazJuego/VistaMercado" unique_id=453747634]
-anchors_preset = 0
-anchor_left = 0.5434028
-anchor_top = 0.5771605
-anchor_right = 0.7100694
-anchor_bottom = 0.9830247
+layout_mode = 1
+anchor_left = 0.5069444
+anchor_top = 0.6882716
+anchor_right = 0.6267361
+anchor_bottom = 0.98919755
 metadata/_edit_use_anchors_ = true
 
-[node name="ManoLosetasUI" type="GridContainer" parent="InterfazJuego/VistaMercado" unique_id=1317145876]
-custom_minimum_size = Vector2(200, 200)
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.0026041667
-anchor_top = 0.22222222
-anchor_right = 0.17621528
-anchor_bottom = 0.5308642
-theme_override_constants/h_separation = 0
-columns = 2
-metadata/_edit_use_anchors_ = true
+[node name="TableroLosetasUI" type="GridContainer" parent="InterfazJuego/VistaMercado" unique_id=738127803]
+layout_mode = 0
+offset_left = 280.0
+offset_top = 450.0
+offset_right = 724.0
+offset_bottom = 644.0
+columns = 4
+
+[node name="Espacio1" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=1203590611]
+layout_mode = 2
+
+[node name="Espacio2" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=339444256]
+layout_mode = 2
+
+[node name="Espacio3" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=1037105968]
+layout_mode = 2
+
+[node name="Espacio4" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=634816840]
+layout_mode = 2
+
+[node name="Espacio5" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=1682805840]
+layout_mode = 2
+
+[node name="Espacio6" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=731437344]
+layout_mode = 2
+
+[node name="Espacio7" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=527798958]
+layout_mode = 2
+
+[node name="Espacio8" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=1755734738]
+layout_mode = 2
+
+[node name="Espacio9" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=1018976025]
+layout_mode = 2
+
+[node name="Espacio10" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=1563785365]
+layout_mode = 2
+
+[node name="Espacio11" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=1044065019]
+layout_mode = 2
+
+[node name="Espacio12" type="TextureRect" parent="InterfazJuego/VistaMercado/TableroLosetasUI" unique_id=1213965354]
+layout_mode = 2
+
+[node name="Conceciones UI" type="HBoxContainer" parent="InterfazJuego/VistaMercado" unique_id=349004396]
+layout_mode = 0
+offset_left = 350.0
+offset_right = 790.0
+offset_bottom = 204.0
+
+[node name="ConcesionLargo" type="TextureRect" parent="InterfazJuego/VistaMercado/Conceciones UI" unique_id=217960990]
+layout_mode = 2
+
+[node name="ConcesionCorto1" type="TextureRect" parent="InterfazJuego/VistaMercado/Conceciones UI" unique_id=728901599]
+layout_mode = 2
+
+[node name="ConcesionCorto2" type="TextureRect" parent="InterfazJuego/VistaMercado/Conceciones UI" unique_id=1259183390]
+layout_mode = 2
 
 [node name="VistaTableroPersonal" type="Control" parent="InterfazJuego" unique_id=1548390096]
 visible = false
@@ -145,8 +223,47 @@ offset_right = 1151.0
 offset_bottom = 45.0
 text = "Volver al mercado"
 
-[node name="DragLayer" type="CanvasLayer" parent="." unique_id=191574455]
+[node name="ManoLosetasUI" type="GridContainer" parent="InterfazJuego/VistaTableroPersonal" unique_id=1317145876]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.8541667
+anchor_top = 0.22839506
+anchor_right = 0.9869792
+anchor_bottom = 0.55092585
+theme_override_constants/h_separation = 0
+columns = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="DragLayer" type="CanvasLayer" parent="InterfazJuego" unique_id=191574455]
 layer = 100
+
+[node name="BtnFase1" type="Button" parent="InterfazJuego" unique_id=370506066]
+anchors_preset = -1
+anchor_top = 0.0015432099
+anchor_right = 0.06336805
+anchor_bottom = 0.06481481
+text = "Fase 1"
+metadata/_edit_use_anchors_ = true
+
+[node name="BtnFase2" type="Button" parent="InterfazJuego" unique_id=295091616]
+anchors_preset = -1
+anchor_left = 0.06423611
+anchor_top = 0.0015432099
+anchor_right = 0.12760417
+anchor_bottom = 0.06481481
+text = "Fase 2
+"
+metadata/_edit_use_anchors_ = true
+
+[node name="BtnFase3" type="Button" parent="InterfazJuego" unique_id=1251467911]
+anchors_preset = -1
+anchor_left = 0.12847222
+anchor_top = 0.0015432099
+anchor_right = 0.19184028
+anchor_bottom = 0.06481481
+text = "Fase 3
+"
+metadata/_edit_use_anchors_ = true
 
 [node name="LogicaJuego" type="Node" parent="." unique_id=149358308]
 script = ExtResource("1_h3ccx")
