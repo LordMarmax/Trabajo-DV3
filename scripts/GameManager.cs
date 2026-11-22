@@ -57,12 +57,19 @@ public partial class GameManager : Node
     private bool cartasInicialDadas = false;
 
     // ── Tablero personal del humano ──────────────────────────────────────────────
-    // Cada fila es una lista ordenada de CartaTablero (máx 3 filas)
-    private List<CartaTablero>[] filasHumano = {
-        new List<CartaTablero>(),
-        new List<CartaTablero>(),
-        new List<CartaTablero>()
+    // 4 filas (índices 0-3). Máximo 3 pueden tener cartas al mismo tiempo.
+    // La primera carta va siempre a fila 1 (índice 1).
+    // Cada fila es un diccionario columnaGlobal → CartaTablero.
+    // columnaGlobal es un índice entero que crece hacia la derecha.
+    private Dictionary<int, CartaTablero>[] filasHumano = {
+        new Dictionary<int, CartaTablero>(),  // fila 0
+        new Dictionary<int, CartaTablero>(),  // fila 1
+        new Dictionary<int, CartaTablero>(),  // fila 2
+        new Dictionary<int, CartaTablero>()   // fila 3
     };
+
+    // Rango de columnas ocupadas en todo el tablero (para renderizado)
+    private int colMin = 0, colMax = 0;
 
     // Losetas en mano del humano (robadas en este turno, listas para colocar)
     private List<TileData> manoLosetas = new List<TileData>();
@@ -74,6 +81,11 @@ public partial class GameManager : Node
 
     // ── Concesiones (fijas durante toda la partida) ──────────────────────────────
     private bool concesionesFijadas = false;
+
+    // Seguimiento de concesiones cumplidas: fase en que se cumplió (1,2,3) o 0=no cumplida
+    // Índices: 0=ConcesionLargo(roja), 1=ConcesionCorto1(verde), 2=ConcesionCorto2(verde)
+    private ConcessionData concesionDataLargo, concesionDataCorto1, concesionDataCorto2;
+    private int[] faseCumplimientoConcesion = { 0, 0, 0 };
 
     // ── Nodos UI ─────────────────────────────────────────────────────────────────
     private Control vistaMercado;
@@ -91,24 +103,19 @@ public partial class GameManager : Node
     // Concesiones (fijas durante toda la partida)
     private TextureRect concesionLargo, concesionCorto1, concesionCorto2;
 
-    // Tablero personal: tres HBoxContainer de filas
-    private HBoxContainer filaUI1, filaUI2, filaUI3;
+    // Tablero personal: cuatro HBoxContainer de filas (Fila0..Fila3)
+    private HBoxContainer filaUI0, filaUI1, filaUI2, filaUI3;
 
-    // Zonas de drop de filas (en VistaMercado) — ya no se usan (todo es click)
-    // private Control dropFila1, dropFila2, dropFila3;
+    // Panel de posiciones válidas (overlay sobre VistaTableroPersonal)
+    // Botones "+" creados dinámicamente al abrir la selección
+    private Control overlayPosiciones;
 
     // Botones
     private Button btnIrTablero, btnVolverMercado;
     private Button btnFase1, btnFase2, btnFase3;
     private Label labelEstado;
 
-    // Panel para elegir fila al colocar una carta
-    private Control panelElegirFila;
-    private Label labelPreguntaFila;
-    private Label labelErrorFila;
-    private Button btnFilaUI1, btnFilaUI2, btnFilaUI3, btnCancelarFila;
-
-    // Carta pendiente de colocación (mientras el panel está abierto)
+    // Carta pendiente de colocación (mientras la selección está abierta)
     private CardData cartaPendiente = null;
 
     // ── Drag & Drop ──────────────────────────────────────────────────────────────
@@ -167,13 +174,22 @@ public partial class GameManager : Node
 
         // Tablero central — eliminado, ya no existe en la escena
 
-        // Filas del tablero personal
+        // 4 filas del tablero personal
+        filaUI0 = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer/Fila0");
         filaUI1 = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer/Fila1");
         filaUI2 = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer/Fila2");
         filaUI3 = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer/Fila3");
 
-        // Botones de fase: solo se obtienen la referencia para ocultarlos por código.
-        // La progresión es automática; el jugador no puede saltar fases manualmente.
+        // Overlay de posiciones válidas — se crea dinámicamente encima del tablero
+        overlayPosiciones = new Control();
+        overlayPosiciones.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        overlayPosiciones.LayoutMode = 1;
+        overlayPosiciones.AnchorRight = 1f;
+        overlayPosiciones.AnchorBottom = 1f;
+        overlayPosiciones.MouseFilter = Control.MouseFilterEnum.Ignore;
+        vistaTablero.AddChild(overlayPosiciones);
+
+        // Botones de fase: ocultos — progresión automática
         btnFase1 = GetNode<Button>("/root/Mundo/InterfazJuego/BtnFase1");
         btnFase2 = GetNode<Button>("/root/Mundo/InterfazJuego/BtnFase2");
         btnFase3 = GetNode<Button>("/root/Mundo/InterfazJuego/BtnFase3");
@@ -181,30 +197,42 @@ public partial class GameManager : Node
         btnFase2.Visible = false;
         btnFase3.Visible = false;
 
-        btnIrTablero   = GetNode<Button>("/root/Mundo/InterfazJuego/VistaMercado/BtnIrTablero");
+        btnIrTablero     = GetNode<Button>("/root/Mundo/InterfazJuego/VistaMercado/BtnIrTablero");
         btnVolverMercado = GetNode<Button>("/root/Mundo/InterfazJuego/VistaTableroPersonal/BtnVolverMercado");
 
-        // Las cartas del mercado solo se seleccionan con click (CardVisual._GuiInput).
-        // No hay zonas de drop en VistaMercado.
+        // "Ver mi Tablero" solo va al tablero si no hay colocación pendiente
+        btnIrTablero.Pressed += () => {
+            if (cartaPendiente == null) CambiarVista(true);
+        };
 
-        // NO se conectan los botones de fase a IniciarFase — la progresión es automática.
-        btnIrTablero.Pressed     += () => CambiarVista(true);
-        btnVolverMercado.Pressed += () => CambiarVista(false);
+        // "Volver al mercado" / "Cancelar elección"
+        btnVolverMercado.Pressed += () => {
+            if (cartaPendiente != null)
+            {
+                // Cancelar elección de fila — devolver la columna al mercado
+                mercado[_colPendiente] = (cartaPendiente, _losetasPendientes);
+                cartaPendiente = null;
+                _losetasPendientes = null;
+                LimpiarOverlay();
+                RenderizarTableroPersonal();
+                RenderizarMercado();
+                btnVolverMercado.Text = "Volver al mercado";
+                // Si hay losetas pendientes, quedarse en el tablero para colocarlas
+                if (manoLosetas.Count > 0)
+                {
+                    ActualizarBtnVolver();
+                    return;
+                }
+            }
 
-        // Panel selección de fila
-        panelElegirFila  = GetNode<Control>("/root/Mundo/InterfazJuego/PanelElegirFila");
-        labelPreguntaFila = panelElegirFila.GetNode<Label>("VBox/LabelPregunta");
-        labelErrorFila   = panelElegirFila.GetNode<Label>("VBox/LabelError");
-        btnFilaUI1       = panelElegirFila.GetNode<Button>("VBox/BtnFila1");
-        btnFilaUI2       = panelElegirFila.GetNode<Button>("VBox/BtnFila2");
-        btnFilaUI3       = panelElegirFila.GetNode<Button>("VBox/BtnFila3");
-        btnCancelarFila  = panelElegirFila.GetNode<Button>("VBox/BtnCancelar");
-        panelElegirFila.Visible = false;
-
-        btnFilaUI1.Pressed += () => IntentarColocarEnFila(0);
-        btnFilaUI2.Pressed += () => IntentarColocarEnFila(1);
-        btnFilaUI3.Pressed += () => IntentarColocarEnFila(2);
-        btnCancelarFila.Pressed += () => CerrarPanelFila(descartada: true);
+            // Solo volver al mercado si no hay losetas pendientes
+            if (manoLosetas.Count > 0)
+            {
+                ActualizarBtnVolver();
+                return;
+            }
+            CambiarVista(false);
+        };
 
         // Iniciar partida
         CambiarVista(false);
@@ -256,9 +284,21 @@ public partial class GameManager : Node
         var rojas  = ManagerRojas.Cartas.Values.ToList();
         var verdes = ManagerVerdes.Cartas.Values.ToList();
 
-        if (rojas.Count  > 0) concesionLargo.Texture  = rojas[rng.Next(rojas.Count)].ConcessionImage;
-        if (verdes.Count > 0) concesionCorto1.Texture  = verdes[rng.Next(verdes.Count)].ConcessionImage;
-        if (verdes.Count > 1) concesionCorto2.Texture  = verdes[rng.Next(verdes.Count)].ConcessionImage;
+        if (rojas.Count  > 0)
+        {
+            concesionDataLargo = rojas[rng.Next(rojas.Count)];
+            concesionLargo.Texture = concesionDataLargo.ConcessionImage;
+        }
+        if (verdes.Count > 0)
+        {
+            concesionDataCorto1 = verdes[rng.Next(verdes.Count)];
+            concesionCorto1.Texture = concesionDataCorto1.ConcessionImage;
+        }
+        if (verdes.Count > 1)
+        {
+            concesionDataCorto2 = verdes[rng.Next(verdes.Count)];
+            concesionCorto2.Texture = concesionDataCorto2.ConcessionImage;
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -344,7 +384,7 @@ public partial class GameManager : Node
     /// </summary>
     public void HumanoEligeColumna(int colIndex)
     {
-        // Si el panel de fila está abierto, ignorar nuevos clicks en el mercado
+        // Si ya hay una colocación pendiente, ignorar
         if (cartaPendiente != null) return;
 
         if (mercado[colIndex] == null)
@@ -356,106 +396,378 @@ public partial class GameManager : Node
         var (carta, losetas) = mercado[colIndex].Value;
         mercado[colIndex] = null;
 
-        // Guardar la carta y las losetas en variables pendientes,
-        // luego mostrar el panel para que el jugador elija la fila
         cartaPendiente = carta;
         _losetasPendientes = losetas;
         _colPendiente = colIndex;
 
-        AbrirPanelFila(carta);
+        // Abrir vista tablero y mostrar posiciones válidas como botones "+"
+        CambiarVista(true);
+        MostrarPosicionesValidas(carta);
     }
 
-    // Variables temporales mientras el panel está abierto
+    // Variables temporales mientras la colocación está pendiente
     private List<TileData> _losetasPendientes;
     private int _colPendiente;
 
-    private void AbrirPanelFila(CardData carta)
+    // ── Estructura de posición válida ────────────────────────────────────────
+    // filaIndex: 0-3
+    // alFinal: true = agregar a la derecha, false = agregar a la izquierda
+    // esFilaNueva: la fila estaba vacía
+    private struct PosicionColocacion
     {
-        labelErrorFila.Text = "";
-        labelPreguntaFila.Text = $"Carta nivel {carta.Level}\n¿En qué fila la colocas?";
-
-        // Habilitar/deshabilitar botones según qué filas admiten la carta
-        for (int f = 0; f < 3; f++)
-        {
-            var btn = f == 0 ? btnFilaUI1 : f == 1 ? btnFilaUI2 : btnFilaUI3;
-            var fila = filasHumano[f];
-            bool puedeIr = PuedeEntrarEnFila(carta, fila, out _);
-            bool filaLibre = fila.Count == 0;
-            btn.Disabled = false; // siempre habilitado — la validación la damos al presionar
-        }
-
-        panelElegirFila.Visible = true;
-    }
-
-    private void IntentarColocarEnFila(int filaIndex)
-    {
-        if (cartaPendiente == null) return;
-        var fila = filasHumano[filaIndex];
-
-        if (!PuedeEntrarEnFila(cartaPendiente, fila, out string razon))
-        {
-            labelErrorFila.Text = razon;
-            return;
-        }
-
-        // Colocar la carta
-        AgregarCartaAFila(cartaPendiente, filaIndex);
-        CerrarPanelFila(descartada: false);
+        public int FilaIndex;
+        public bool AlFinal;
+        public bool EsFilaNueva;
+        public int ColGlobal;   // int.MinValue = calcular automáticamente; cualquier otro = columna fija
+        public PosicionColocacion(int f, bool final, bool nueva, int col = int.MinValue)
+        { FilaIndex = f; AlFinal = final; EsFilaNueva = nueva; ColGlobal = col; }
     }
 
     /// <summary>
-    /// Valida si una carta puede entrar en una fila dada.
-    /// Regla: el nivel debe ser ≥ al nivel de la última carta de la fila,
-    /// o la fila está vacía.
+    /// Calcula todas las posiciones donde la carta puede colocarse.
+    /// Reglas:
+    ///  - Primera carta del tablero → solo fila 1 (índice 1), columna 0.
+    ///  - En una fila con cartas: izquierda si carta.Level < mínimo, derecha si ≥ máximo.
+    ///  - Nueva fila: solo inmediatamente adyacente a filas ocupadas.
+    ///  - Máximo 3 filas activas.
+    ///  - Al agregar a izquierda: la nueva columna es colMin-1.
+    ///  - Al agregar a derecha:   la nueva columna es colMax+1.
     /// </summary>
-    private bool PuedeEntrarEnFila(CardData carta, List<CartaTablero> fila, out string razon)
+    private List<PosicionColocacion> CalcularPosicionesValidas(CardData carta)
     {
-        razon = "";
-        if (fila.Count == 0) return true; // fila vacía — siempre acepta
+        var resultado = new List<PosicionColocacion>();
 
-        int ultimoNivel = fila[fila.Count - 1].Data.Level;
-        if (carta.Level < ultimoNivel)
+        int filasOcupadas = 0;
+        int primeraFila = -1, ultimaFila = -1;
+        for (int f = 0; f < 4; f++)
         {
-            razon = $"No es posible: la carta (Nivel {carta.Level}) es menor que la última de esta fila (Nivel {ultimoNivel}).";
-            return false;
+            if (filasHumano[f].Count > 0)
+            {
+                filasOcupadas++;
+                if (primeraFila < 0) primeraFila = f;
+                ultimaFila = f;
+            }
         }
-        return true;
+
+        // Caso especial: tablero vacío → primera carta va solo a fila 1
+        if (filasOcupadas == 0)
+        {
+            resultado.Add(new PosicionColocacion(1, true, true));
+            return resultado;
+        }
+
+        // Posiciones dentro de filas existentes
+        for (int f = 0; f < 4; f++)
+        {
+            var fila = filasHumano[f];
+            if (fila.Count == 0) continue;
+
+            int minCol = fila.Keys.Min();
+            int maxCol = fila.Keys.Max();
+            int nivelIzq = fila[minCol].Data.Level;
+            int nivelDer = fila[maxCol].Data.Level;
+
+            // Agregar a la izquierda: columna = minCol - 1 (específica de esta fila)
+            if (carta.Level < nivelIzq)
+                resultado.Add(new PosicionColocacion(f, false, false, minCol - 1));
+
+            // Agregar a la derecha: columna = maxCol + 1 (específica de esta fila)
+            if (carta.Level >= nivelDer)
+                resultado.Add(new PosicionColocacion(f, true, false, maxCol + 1));
+        }
+
+        // Posiciones de fila nueva (máx 3 filas activas)
+        if (filasOcupadas < 3)
+        {
+            // Fila nueva arriba: encima de la fila más alta
+            int arriba = primeraFila - 1;
+            if (arriba >= 0 && filasHumano[arriba].Count == 0)
+            {
+                // "+" en todas las columnas del rango global (no solo las de primeraFila)
+                for (int col = colMin; col <= colMax; col++)
+                    resultado.Add(new PosicionColocacion(arriba, true, true, col));
+            }
+
+            // Fila nueva abajo: debajo de la fila más baja
+            int abajo = ultimaFila + 1;
+            if (abajo <= 3 && filasHumano[abajo].Count == 0)
+            {
+                // "+" en todas las columnas del rango global
+                for (int col = colMin; col <= colMax; col++)
+                    resultado.Add(new PosicionColocacion(abajo, true, true, col));
+            }
+        }
+
+        return resultado;
     }
 
-    private void CerrarPanelFila(bool descartada)
+    /// <summary>
+    /// <summary>
+    /// Muestra botones "+" en las posiciones válidas del tablero.
+    /// Los botones se insertan DESPUÉS de que RenderizarTableroPersonal
+    /// ya colocó los spacers de alineación, para mantener la consistencia visual.
+    private void MostrarPosicionesValidas(CardData carta)
     {
-        if (descartada)
-        {
-            // "Cancelar" = el jugador no quiere esta carta ahora.
-            // Devolvemos la columna al mercado para que pueda elegir otra.
-            if (cartaPendiente != null)
-                mercado[_colPendiente] = (cartaPendiente, _losetasPendientes);
+        RenderizarTableroPersonal();
+        LimpiarOverlay();
 
-            cartaPendiente = null;
-            _losetasPendientes = null;
-            panelElegirFila.Visible = false;
-            RenderizarMercado(); // vuelve a mostrar las 3 columnas disponibles
-            return;              // NO se avanza el turno
+        if (btnVolverMercado != null)
+            btnVolverMercado.Text = "Cancelar (elegir otra carta)";
+
+        var posiciones = CalcularPosicionesValidas(carta);
+        bool tableroVacio = filasHumano.All(f => f.Count == 0);
+
+        if (posiciones.Count == 0)
+        {
+            Log("Esta carta no cabe en ninguna posición válida. Se descarta.");
+            DescartarCartaPendiente();
+            return;
         }
 
-        // Carta colocada correctamente — proceder con losetas y autómata
-        if (cartaPendiente != null)
+        // ── Posiciones en filas existentes (extremo izq / extremo der) ──────
+        foreach (var pos in posiciones.FindAll(p => !p.EsFilaNueva || tableroVacio))
         {
-            foreach (var loseta in _losetasPendientes)
-                manoLosetas.Add(loseta);
-            RenderizarManoLosetas();
+            HBoxContainer filaUI = ObtenerFilaUI(pos.FilaIndex);
+            var capPos = pos;
+            Button btn = new Button();
+            btn.Text = "+";
+            btn.CustomMinimumSize = new Vector2(44, 170);
+            btn.SizeFlagsVertical = Control.SizeFlags.Fill;
+            btn.LayoutMode = 2;
 
-            Log($"Humano tomó col {_colPendiente + 1}: {_losetasPendientes.Count} loseta(s)");
-
-            AutomataTomaTurno(_colPendiente);
-            RenderizarMercado();
+            if (tableroVacio || pos.AlFinal)
+                filaUI.AddChild(btn);
+            else
+            {
+                filaUI.AddChild(btn);
+                filaUI.MoveChild(btn, 0);
+            }
+            btn.Pressed += () => ConfirmarColocacion(capPos);
         }
+
+        // ── Posiciones en filas nuevas: un "+" por columna del rango ─────────
+        // Agrupar por fila nueva y renderizar en una sola pasada
+        var filasNuevasPorIdx = new Dictionary<int, List<PosicionColocacion>>();
+        foreach (var pos in posiciones.FindAll(p => p.EsFilaNueva && !tableroVacio))
+        {
+            if (!filasNuevasPorIdx.ContainsKey(pos.FilaIndex))
+                filasNuevasPorIdx[pos.FilaIndex] = new List<PosicionColocacion>();
+            filasNuevasPorIdx[pos.FilaIndex].Add(pos);
+        }
+
+        foreach (var kv in filasNuevasPorIdx)
+        {
+            HBoxContainer filaUI = ObtenerFilaUI(kv.Key);
+            var colsConBoton = new HashSet<int>(kv.Value.ConvertAll(p => p.ColGlobal));
+
+            for (int col = colMin; col <= colMax; col++)
+            {
+                if (colsConBoton.Contains(col))
+                {
+                    var posEstaCol = kv.Value.Find(p => p.ColGlobal == col);
+                    var capPos = posEstaCol;
+                    Button btn = new Button();
+                    btn.Text = "+";
+                    btn.CustomMinimumSize = new Vector2(120, 170);
+                    btn.SizeFlagsHorizontal = Control.SizeFlags.Fill | Control.SizeFlags.Expand;
+                    btn.SizeFlagsVertical = Control.SizeFlags.Fill;
+                    btn.LayoutMode = 2;
+                    filaUI.AddChild(btn);
+                    btn.Pressed += () => ConfirmarColocacion(capPos);
+                }
+                else
+                {
+                    var sp = new Control();
+                    sp.CustomMinimumSize = new Vector2(120, 170);
+                    sp.MouseFilter = Control.MouseFilterEnum.Ignore;
+                    filaUI.AddChild(sp);
+                }
+            }
+        }
+    }
+
+    private void ConfirmarColocacion(PosicionColocacion pos)
+    {
+        if (cartaPendiente == null) return;
+
+        // Limpiar overlay ANTES de agregar la carta (para no confundir "+" con spacers)
+        LimpiarOverlay();
+        AgregarCartaAFila(cartaPendiente, pos.FilaIndex, pos.AlFinal, pos.ColGlobal);
+
+        foreach (var loseta in _losetasPendientes)
+            manoLosetas.Add(loseta);
+        RenderizarManoLosetas();
+
+        Log($"Humano colocó carta {cartaPendiente.CardId} (Nv{cartaPendiente.Level}) en fila {pos.FilaIndex + 1}");
+        AutomataTomaTurno(_colPendiente);
 
         cartaPendiente = null;
         _losetasPendientes = null;
-        panelElegirFila.Visible = false;
+
+        if (btnVolverMercado != null) btnVolverMercado.Text = "Volver al mercado";
+
+        // Solo volver al mercado y avanzar turno si no quedan losetas por colocar
+        if (manoLosetas.Count > 0)
+        {
+            ActualizarBtnVolver();
+            return; // el jugador debe colocar todas las losetas primero
+        }
+
+        CambiarVista(false);
+        RenderizarMercado();
         FinalizarTurno();
     }
+
+    private void DescartarCartaPendiente()
+    {
+        foreach (var loseta in _losetasPendientes)
+            manoLosetas.Add(loseta);
+        RenderizarManoLosetas();
+
+        AutomataTomaTurno(_colPendiente);
+        cartaPendiente = null;
+        _losetasPendientes = null;
+
+        if (btnVolverMercado != null) btnVolverMercado.Text = "Volver al mercado";
+
+        if (manoLosetas.Count > 0)
+        {
+            ActualizarBtnVolver();
+            return;
+        }
+
+        CambiarVista(false);
+        RenderizarMercado();
+        FinalizarTurno();
+    }
+
+    /// <summary>
+    /// Actualiza el texto del botón según el estado actual.
+    /// Si hay losetas pendientes, indica cuántas faltan por colocar.
+    /// </summary>
+    private void ActualizarBtnVolver()
+    {
+        if (btnVolverMercado == null) return;
+        if (manoLosetas.Count > 0)
+            btnVolverMercado.Text = $"Colocar losetas ({manoLosetas.Count} restante(s))";
+        else
+            btnVolverMercado.Text = "Volver al mercado";
+    }
+
+    /// <summary>
+    /// Se llama cuando se coloca una loseta en el tablero personal.
+    /// Si la mano queda vacía, avanza el turno automáticamente.
+    /// </summary>
+    public void NotificarLosetaColocada()
+    {
+        RenderizarManoLosetas();
+        ActualizarBtnVolver();
+
+        if (manoLosetas.Count == 0)
+        {
+            // Todas las losetas colocadas — avanzar turno
+            CambiarVista(false);
+            RenderizarMercado();
+            FinalizarTurno();
+        }
+    }
+
+    private void LimpiarOverlay()
+    {
+        if (overlayPosiciones == null) return;
+        // Quitar botones "+" que se añadieron a las filas UI
+        foreach (HBoxContainer fila in new[] { filaUI0, filaUI1, filaUI2, filaUI3 })
+        {
+            if (fila == null) continue;
+            foreach (Node hijo in fila.GetChildren())
+                if (hijo is Button b && b.Text == "+") b.QueueFree();
+        }
+    }
+
+    private void AgregarCartaAFila(CardData carta, int filaIndex, bool alFinal, int colGlobal = int.MinValue)
+    {
+        CartaTablero nodo = cartaTableroScene.Instantiate<CartaTablero>();
+        nodo.CustomMinimumSize = new Vector2(120, 170);
+        nodo.DataPendiente = carta;
+
+        bool tableroVacio = filasHumano.All(f => f.Count == 0);
+        int col;
+        if (tableroVacio)
+        {
+            col = 0;
+            colMin = 0; colMax = 0;
+        }
+        else if (colGlobal != int.MinValue)
+        {
+            // Columna exacta especificada por CalcularPosicionesValidas
+            col = colGlobal;
+            if (col < colMin) colMin = col;
+            if (col > colMax) colMax = col;
+        }
+        else if (alFinal)
+        {
+            col = colMax + 1;
+            colMax = col;
+        }
+        else
+        {
+            col = colMin - 1;
+            colMin = col;
+        }
+
+        filasHumano[filaIndex][col] = nodo;
+        RenderizarTableroPersonal();
+
+        Log($"  → Carta {carta.CardId} (Nv{carta.Level}) en fila {filaIndex + 1}, col {col}");
+    }
+
+    /// <summary>
+    /// Re-renderiza las 4 filas. Los CartaTablero del diccionario NUNCA se destruyen;
+    /// solo los spacers (Control sin script) se recrean en cada render.
+    /// </summary>
+    private void RenderizarTableroPersonal()
+    {
+        for (int f = 0; f < 4; f++)
+        {
+            var filaUI = ObtenerFilaUI(f);
+            if (filaUI == null) continue;
+
+            // 1. Sacar todas las CartaTablero del árbol (sin destruirlas)
+            foreach (Node hijo in filaUI.GetChildren().ToArray())
+            {
+                if (hijo is CartaTablero) filaUI.RemoveChild(hijo);
+                else if (hijo is not Button) hijo.QueueFree(); // spacers y otros nodos sí se liberan
+            }
+
+            if (filasHumano[f].Count == 0) continue;
+
+            // 2. Volver a añadir en orden de columna global, con spacers donde no hay carta
+            for (int col = colMin; col <= colMax; col++)
+            {
+                if (filasHumano[f].TryGetValue(col, out CartaTablero carta))
+                {
+                    // La CartaTablero ya no tiene padre (fue removida arriba) → AddChild directo
+                    filaUI.AddChild(carta);
+                }
+                else
+                {
+                    Control spacer = new Control();
+                    spacer.CustomMinimumSize = new Vector2(120, 170);
+                    spacer.MouseFilter = Control.MouseFilterEnum.Ignore;
+                    filaUI.AddChild(spacer);
+                }
+            }
+        }
+    }
+
+    private HBoxContainer ObtenerFilaUI(int idx) => idx switch
+    {
+        0 => filaUI0,
+        1 => filaUI1,
+        2 => filaUI2,
+        3 => filaUI3,
+        _ => filaUI1
+    };
 
     // ═══════════════════════════════════════════════════════════════════════════
     // AUTÓMATA
@@ -513,6 +825,8 @@ public partial class GameManager : Node
     private void FinalizarFase()
     {
         Log($"=== Fase {FaseActual} completada ===");
+        EvaluarConcesiones(FaseActual);
+
         if (FaseActual < 3)
         {
             Log("Pasando a la siguiente fase…");
@@ -520,10 +834,50 @@ public partial class GameManager : Node
         }
         else
         {
-            Log("¡Partida terminada! Calculando puntuación…");
+            Log("¡Partida terminada! Calculando puntuación.");
             MostrarPuntuacion();
         }
     }
+
+    /// <summary>
+    /// Evalúa si el jugador cumple las concesiones al final de la fase dada.
+    /// Cada concesión solo puede marcarse una vez (la primera fase en que se cumple).
+    /// La condición de cumplimiento se basa en RequiredPoints de la concesión
+    /// comparado con el total de Sistemas Vitales del jugador.
+    /// </summary>
+    private void EvaluarConcesiones(int fase)
+    {
+        // Calculamos la cantidad total de Vitales e Invernaderos como métrica de cumplimiento
+        // (RequiredPoints indica cuántos elementos de ese tipo necesitas)
+        int totalVitales = ContarTiposHumano(TileData.TileType.VitalCubo,
+                                             TileData.TileType.VitalTorre,
+                                             TileData.TileType.VitalCupula);
+        int totalInvernaderos = ContarTiposHumano(TileData.TileType.InvernaderoVerde,
+                                                   TileData.TileType.InvernaderoNaranja,
+                                                   TileData.TileType.InvernaderoAmarillo);
+        int totalLosetas = filasHumano.Sum(f => f.Values.Sum(ct => ct.LosetasColocadas.Count(l => l != null)));
+
+        // Concesión Larga (roja): 100% en fase 1-2, 50% en fase 3
+        if (faseCumplimientoConcesion[0] == 0 && concesionDataLargo != null)
+        {
+            if (ConcesionCumplida(concesionDataLargo, totalVitales, totalInvernaderos, totalLosetas))
+                faseCumplimientoConcesion[0] = fase;
+        }
+        // Concesiones Cortas (verdes): 100% en fase 1, 50% en fase 2, 0 en fase 3
+        if (faseCumplimientoConcesion[1] == 0 && concesionDataCorto1 != null)
+        {
+            if (ConcesionCumplida(concesionDataCorto1, totalVitales, totalInvernaderos, totalLosetas))
+                faseCumplimientoConcesion[1] = fase;
+        }
+        if (faseCumplimientoConcesion[2] == 0 && concesionDataCorto2 != null)
+        {
+            if (ConcesionCumplida(concesionDataCorto2, totalVitales, totalInvernaderos, totalLosetas))
+                faseCumplimientoConcesion[2] = fase;
+        }
+    }
+
+    private bool ConcesionCumplida(ConcessionData c, int vitales, int invernaderos, int totalLosetas)
+        => totalLosetas >= c.RequiredPoints; // RequiredPoints = mínimo de losetas colocadas requeridas
 
     // ═══════════════════════════════════════════════════════════════════════════
     // VALIDACIÓN Y COLOCACIÓN DE CARTAS EN EL TABLERO PERSONAL
@@ -536,24 +890,6 @@ public partial class GameManager : Node
     ///   2. Solo se puede agregar en un extremo (izquierda o derecha) de una fila,
     ///      NUNCA intercalar.
     ///   3. Máximo 3 filas. Se puede iniciar una fila nueva si la carta toca
-    ///      (por borde) a alguna carta existente — o si es la primera carta.
-    ///   4. Si no cabe en ningún lugar válido, se descarta.
-    /// Devuelve true si fue colocada, false si fue descartada.
-    /// </summary>
-    private void AgregarCartaAFila(CardData carta, int filaIndex)
-    {
-        CartaTablero nodo = cartaTableroScene.Instantiate<CartaTablero>();
-        nodo.CustomMinimumSize = new Vector2(120, 170);
-
-        HBoxContainer filaUI = filaIndex == 0 ? filaUI1 : filaIndex == 1 ? filaUI2 : filaUI3;
-
-        filasHumano[filaIndex].Add(nodo);
-        filaUI.AddChild(nodo);
-        nodo.Inicializar(carta);
-
-        Log($"  → Carta {carta.CardId} (Nv{carta.Level}) en Fila {filaIndex + 1}");
-    }
-
     // ═══════════════════════════════════════════════════════════════════════════
     // DRAG & DROP DE LOSETAS HACIA CUADRANTES DE CARTAS
     // ═══════════════════════════════════════════════════════════════════════════
@@ -622,11 +958,10 @@ public partial class GameManager : Node
             bool colocada = IntentarColocarLoseta(loseta, mousePos);
             if (colocada)
             {
-                // Colocada: destruir fantasma y re-renderizar mano completa
-                // (las otras losetas se reposicionan ahora que hay una menos)
+                // Colocada: destruir fantasma, actualizar mano y avanzar turno si mano vacía
                 manoLosetas.Remove(loseta);
                 fantasma.QueueFree();
-                RenderizarManoLosetas();
+                NotificarLosetaColocada();
                 return;
             }
 
@@ -688,9 +1023,9 @@ public partial class GameManager : Node
     /// </summary>
     private bool IntentarColocarLoseta(TileData loseta, Vector2 mousePos)
     {
-        for (int f = 0; f < 3; f++)
+        for (int f = 0; f < 4; f++)
         {
-            foreach (CartaTablero ct in filasHumano[f])
+            foreach (CartaTablero ct in filasHumano[f].Values)
             {
                 for (int s = 0; s < 4; s++)
                 {
@@ -772,13 +1107,12 @@ public partial class GameManager : Node
             if (mercado[i] == null) continue;
             var (carta, losetas) = mercado[i].Value;
 
-            // ── Carta: ocupa exactamente el SlotCarta ──────────────────────
+            // Carta — clickeable solo si tiene posiciones válidas en el tablero
             CardVisual cv = cartaVisualScene.Instantiate<CardVisual>();
             cv.TextureNormal = carta.CardImage;
             cv.Data = carta;
             cv.CardIndex = i;
-            // Anclar al rect completo del slot padre
-            cv.LayoutMode = 1;          // ancla
+            cv.LayoutMode = 1;
             cv.AnchorLeft   = 0f;
             cv.AnchorTop    = 0f;
             cv.AnchorRight  = 1f;
@@ -788,7 +1122,17 @@ public partial class GameManager : Node
             cv.OffsetRight  = 0f;
             cv.OffsetBottom = 0f;
             cv.IgnoreTextureSize = true;
-            cv.StretchMode = TextureButton.StretchModeEnum.Scale; // rellena sin recorte de aspecto
+            cv.StretchMode = TextureButton.StretchModeEnum.Scale;
+
+            // Si no hay posición válida para esta carta, desactivarla visualmente
+            bool tieneEspacio = CalcularPosicionesValidas(carta).Count > 0;
+            if (!tieneEspacio)
+            {
+                cv.Disabled = true;
+                cv.Modulate = new Color(1f, 1f, 1f, 0.35f); // semitransparente = no disponible
+                cv.TooltipText = "No hay espacio en el tablero para esta carta";
+            }
+
             slotsCarta[i].AddChild(cv);
 
             // ── Losetas: cada una rellena su celda del grid 2x2 ───────────
@@ -808,6 +1152,48 @@ public partial class GameManager : Node
                 slotsLoseta[i].AddChild(tr);
             }
         }
+
+        // Si todas las cartas disponibles están bloqueadas (ninguna cabe en el tablero),
+        // el jugador no puede elegir ninguna — avanzar turno automáticamente descartando todo.
+        bool todasBloqueadas = true;
+        for (int i = 0; i < 3; i++)
+        {
+            if (mercado[i] == null) continue;
+            if (CalcularPosicionesValidas(mercado[i].Value.Carta).Count > 0)
+            {
+                todasBloqueadas = false;
+                break;
+            }
+        }
+        if (todasBloqueadas && mercado.Any(m => m != null))
+        {
+            Log("Ninguna carta del mercado cabe en el tablero — turno forzado a avanzar.");
+            textoConsola.Text = "Ninguna carta disponible cabe en tu tablero. Turno omitido.";
+            // Dejar que el jugador vea el mensaje un frame, luego avanzar
+            CallDeferred(MethodName.ForzarAvanceTurnoSinCarta);
+        }
+    }
+
+    /// <summary>
+    /// Se llama cuando ninguna carta del mercado tiene espacio en el tablero.
+    /// El autómata toma una columna aleatoria y el turno avanza.
+    /// </summary>
+    private void ForzarAvanceTurnoSinCarta()
+    {
+        // El autómata toma la primera columna disponible
+        for (int col = 0; col < 3; col++)
+        {
+            if (mercado[col] != null)
+            {
+                AutomataTomaTurno(col);
+                // Descartar las losetas de esa columna (van al jugador igual, como compensación)
+                // Según el PDF no hay indicación — simplemente se descarta la columna del humano
+                mercado[col] = null;
+                break;
+            }
+        }
+        RenderizarMercado();
+        FinalizarTurno();
     }
 
     /// <summary>
@@ -844,13 +1230,15 @@ public partial class GameManager : Node
 
     private void LimpiarTableroPersonal()
     {
-        foreach (HBoxContainer fila in new[] { filaUI1, filaUI2, filaUI3 })
+        foreach (HBoxContainer fila in new[] { filaUI0, filaUI1, filaUI2, filaUI3 })
             if (fila != null) foreach (Node hijo in fila.GetChildren()) hijo.QueueFree();
 
         foreach (var fila in filasHumano) fila.Clear();
+        colMin = 0; colMax = 0;
         manoLosetas.Clear();
         cartasAutomata.Clear();
         losetasAutomata.Clear();
+        LimpiarOverlay();
     }
 
     private void LimpiarSlot(Control slot)
@@ -866,24 +1254,413 @@ public partial class GameManager : Node
     private void MostrarPuntuacion()
     {
         if (labelEstado != null) labelEstado.Text = "¡Partida terminada!";
-        // Categorías según PDF:
-        // 1. Sistemas Vitales (corazón rojo) — grupos conectados ortogonalmente
-        // 2. Invernaderos (frutas)
+
+        var r = new ResultadoPartida();
+
+        // ═══════════════════════════════════════════════════
+        // HUMANO
+        // ═══════════════════════════════════════════════════
+
+        // 1. Sistemas Vitales — grupos conectados ortogonalmente
+        r.HumanoVitales = CalcularPuntosGrupos(EsTipoVital);
+
+        // 2. Invernaderos — grupos + tríos de 3 frutas distintas
+        r.HumanoInvernaderos  = CalcularPuntosGrupos(EsTipoInvernadero);
+        r.HumanoInvernaderos += CalcularTriosInvernadero();
+
         // 3. Meteoritos (mayoría)
-        // 4. Oficinas de Venta (etiqueta naranja $)
-        // 5. Construcciones Especiales (etiqueta amarilla)
-        // 6. Cartas en mano / iniciales
-        // + Concesiones cumplidas
+        int meteorosHumano   = ContarTiposHumano(TileData.TileType.Meteorito);
+        int meteorosAutomata = losetasAutomata.Count(l => l.Type == TileData.TileType.Meteorito);
+        // también contar meteoritos impresos en cartas del humano
+        meteorosHumano   += ContarMeteoritosImpresosHumano();
+        meteorosAutomata += ContarMeteoritosImpresosAutomata();
+        r.HumanoMeteorita  = meteorosHumano > meteorosAutomata ? 10 : 0;
 
-        // Por ahora mostramos un resumen del estado
-        int totalCartas = filasHumano.Sum(f => f.Count);
-        int totalLosetas = filasHumano.Sum(f => f.Sum(ct => ct.LosetasColocadas.Count(l => l != null)));
+        // 4. Oficinas de Venta
+        r.HumanoOficinas = ContarTiposHumano(TileData.TileType.Oficina) * 2;
 
-        Log($"=== PARTIDA TERMINADA ===");
-        Log($"Cartas en tablero: {totalCartas}");
-        Log($"Losetas colocadas: {totalLosetas}");
-        Log($"Cartas del autómata: {cartasAutomata.Count}");
-        Log("(Puntuación completa pendiente de implementar)");
+        // 5. Construcciones Especiales (efecto espacial simplificado → valor fijo 3 pts por pieza)
+        int especiales = ContarTiposHumano(TileData.TileType.EspecialModulo,
+                                           TileData.TileType.EspecialComplejo,
+                                           TileData.TileType.EspecialRover);
+        r.HumanoEspeciales = especiales * 3;
+
+        // 6. Cartas iniciales conservadas (en este flujo siempre se juegan, pero las 3 dan 9 pts)
+        r.HumanoCartasIniciales = 9;
+
+        // 7. Concesiones del humano
+        r.HumanoConcesiones = CalcularPuntosConcesionesHumano();
+
+        // ═══════════════════════════════════════════════════
+        // AUTÓMATA
+        // ═══════════════════════════════════════════════════
+
+        // 1. Sistemas Vitales — acumulativo (todos como si conectados)
+        int autoVitalTotal = losetasAutomata.Count(l => EsTipoVital(l.Type));
+        autoVitalTotal += ContarVitalesImpresosAutomata();
+        r.AutomataVitales = PuntosGrupoPorTamano(autoVitalTotal);
+
+        // 2. Invernaderos — acumulativo + tríos
+        int autoInvTotal = losetasAutomata.Count(l => EsTipoInvernadero(l.Type));
+        r.AutomataInvernaderos  = PuntosGrupoPorTamano(autoInvTotal);
+        r.AutomataInvernaderos += CalcularTriosAutomata();
+
+        // 3. Meteoritos (mayoría)
+        r.AutomataMeteorita = meteorosAutomata > meteorosHumano ? 10 : 0;
+
+        // 4. Oficinas
+        r.AutomataOficinas = losetasAutomata.Count(l => l.Type == TileData.TileType.Oficina) * 2;
+
+        // 5. Construcciones Especiales — 5 pts fijos cada una
+        r.AutomataEspeciales = losetasAutomata.Count(l =>
+            l.Type == TileData.TileType.EspecialModulo ||
+            l.Type == TileData.TileType.EspecialComplejo ||
+            l.Type == TileData.TileType.EspecialRover) * 5;
+
+        // 6. Losetas de Acción — 2 pts cada una
+        r.AutomataAccion = losetasAutomata.Count(l => l.Type == TileData.TileType.Accion) * 2;
+
+        // 7. Cartas iniciales — bono fijo
+        r.AutomataCartasIniciales = 9;
+
+        // 8. Concesiones del autómata — siempre cumple todas al 100%
+        r.AutomataConcesiones = 0;
+        if (concesionDataLargo  != null) r.AutomataConcesiones += concesionDataLargo.VictoryPoints;
+        if (concesionDataCorto1 != null) r.AutomataConcesiones += concesionDataCorto1.VictoryPoints;
+        if (concesionDataCorto2 != null) r.AutomataConcesiones += concesionDataCorto2.VictoryPoints;
+
+        // ═══════════════════════════════════════════════════
+        // TOTALES Y RESULTADO
+        // ═══════════════════════════════════════════════════
+        r.TotalHumano   = r.HumanoVitales + r.HumanoInvernaderos + r.HumanoMeteorita +
+                          r.HumanoOficinas + r.HumanoEspeciales + r.HumanoCartasIniciales +
+                          r.HumanoConcesiones;
+        r.TotalAutomata = r.AutomataVitales + r.AutomataInvernaderos + r.AutomataMeteorita +
+                          r.AutomataOficinas + r.AutomataEspeciales + r.AutomataAccion +
+                          r.AutomataCartasIniciales + r.AutomataConcesiones;
+        // Empate → gana el autómata
+        r.GanaHumano = r.TotalHumano > r.TotalAutomata;
+
+        MostrarVistaResultados(r);
+    }
+
+    // ── Estructura de resultado ───────────────────────────────────────────────
+    private struct ResultadoPartida
+    {
+        public int HumanoVitales, HumanoInvernaderos, HumanoMeteorita, HumanoOficinas,
+                   HumanoEspeciales, HumanoCartasIniciales, HumanoConcesiones;
+        public int AutomataVitales, AutomataInvernaderos, AutomataMeteorita, AutomataOficinas,
+                   AutomataEspeciales, AutomataAccion, AutomataCartasIniciales, AutomataConcesiones;
+        public int TotalHumano, TotalAutomata;
+        public bool GanaHumano;
+    }
+
+    // ── Helpers de cálculo ────────────────────────────────────────────────────
+
+    private static bool EsTipoVital(TileData.TileType t) =>
+        t == TileData.TileType.VitalCubo ||
+        t == TileData.TileType.VitalTorre ||
+        t == TileData.TileType.VitalCupula;
+
+    private static bool EsTipoInvernadero(TileData.TileType t) =>
+        t == TileData.TileType.InvernaderoVerde ||
+        t == TileData.TileType.InvernaderoNaranja ||
+        t == TileData.TileType.InvernaderoAmarillo;
+
+    // Tabla de puntos por tamaño de grupo (1=1, 2=3, 3=6, 4=10, N≥5=N*2.5≈)
+    private static int PuntosGrupoPorTamano(int tam)
+    {
+        if (tam <= 0) return 0;
+        if (tam == 1) return 1;
+        if (tam == 2) return 3;
+        if (tam == 3) return 6;
+        if (tam == 4) return 10;
+        return 10 + (tam - 4) * 3; // grupos grandes: +3 por cada elemento extra
+    }
+
+    /// <summary>
+    /// Flood-fill sobre el tablero 2D del humano.
+    /// Cada "celda" es (filaIndex, colGlobal, slotIndex[0-3]).
+    /// Dos celdas son adyacentes si comparten un borde: mismo slot en columna vecina,
+    /// o slots adyacentes dentro de la misma carta (sup-izq↔sup-der, inf-izq↔inf-der,
+    /// sup-izq↔inf-izq, sup-der↔inf-der).
+    /// </summary>
+    private int CalcularPuntosGrupos(System.Func<TileData.TileType, bool> esTipo)
+    {
+        // Construir mapa de celdas con losetas del tipo indicado
+        // Incluir también elementos impresos en cartas que coincidan con el tipo
+        var celdas = new HashSet<(int f, int col, int slot)>();
+        for (int f = 0; f < 4; f++)
+        {
+            foreach (var kv in filasHumano[f])
+            {
+                int col = kv.Key;
+                CartaTablero ct = kv.Value;
+                for (int s = 0; s < 4; s++)
+                {
+                    // Loseta colocada
+                    if (ct.LosetasColocadas[s] != null && esTipo(ct.LosetasColocadas[s].Type))
+                        celdas.Add((f, col, s));
+                    // Elemento impreso en la carta
+                    else if (EsElementoImpresoDeTipo(ct.Data, s, esTipo))
+                        celdas.Add((f, col, s));
+                }
+            }
+        }
+
+        var visitadas = new HashSet<(int, int, int)>();
+        int puntosTotales = 0;
+
+        foreach (var celda in celdas)
+        {
+            if (visitadas.Contains(celda)) continue;
+            // BFS para encontrar el grupo conectado
+            int tamGrupo = 0;
+            var cola = new Queue<(int f, int col, int slot)>();
+            cola.Enqueue(celda);
+            visitadas.Add(celda);
+            while (cola.Count > 0)
+            {
+                var (f, col, slot) = cola.Dequeue();
+                tamGrupo++;
+                foreach (var vec in ObtenerVecinos(f, col, slot))
+                {
+                    if (celdas.Contains(vec) && !visitadas.Contains(vec))
+                    {
+                        visitadas.Add(vec);
+                        cola.Enqueue(vec);
+                    }
+                }
+            }
+            puntosTotales += PuntosGrupoPorTamano(tamGrupo);
+        }
+        return puntosTotales;
+    }
+
+    // Devuelve todas las celdas ortogonalmente adyacentes a (f, col, slot)
+    private IEnumerable<(int, int, int)> ObtenerVecinos(int f, int col, int slot)
+    {
+        // Vecinos dentro de la misma carta:
+        // slot 0=SupIzq, 1=SupDer, 2=InfIzq, 3=InfDer
+        // SupIzq ↔ SupDer (misma fila superior)
+        // InfIzq ↔ InfDer (misma fila inferior)
+        // SupIzq ↔ InfIzq (misma columna izquierda)
+        // SupDer ↔ InfDer (misma columna derecha)
+        int[] mismaCartaVecinos = slot switch {
+            0 => new[]{1, 2},
+            1 => new[]{0, 3},
+            2 => new[]{0, 3},
+            3 => new[]{1, 2},
+            _ => System.Array.Empty<int>()
+        };
+        foreach (int s2 in mismaCartaVecinos)
+            yield return (f, col, s2);
+
+        // Vecinos en carta de la misma fila, columna adyacente
+        // slot 0 (SupIzq) ↔ slot 1 (SupDer) de la carta a la izquierda
+        // slot 1 (SupDer) ↔ slot 0 (SupIzq) de la carta a la derecha
+        // slot 2 (InfIzq) ↔ slot 3 (InfDer) de la carta a la izquierda
+        // slot 3 (InfDer) ↔ slot 2 (InfIzq) de la carta a la derecha
+        (int colVec, int slotVec)[] vecColum = slot switch {
+            0 => new[]{(col-1, 1)},
+            1 => new[]{(col+1, 0)},
+            2 => new[]{(col-1, 3)},
+            3 => new[]{(col+1, 2)},
+            _ => System.Array.Empty<(int,int)>()
+        };
+        foreach (var (cv, sv) in vecColum)
+            yield return (f, cv, sv);
+
+        // Vecinos en la fila adyacente (arriba/abajo), misma columna
+        // slot SupIzq(0)/SupDer(1) de fila f ↔ slot InfIzq(2)/InfDer(3) de fila f-1
+        // slot InfIzq(2)/InfDer(3) de fila f ↔ slot SupIzq(0)/SupDer(1) de fila f+1
+        (int filaVec, int slotVecF)[] vecFila = slot switch {
+            0 => new[]{(f-1, 2)},
+            1 => new[]{(f-1, 3)},
+            2 => new[]{(f+1, 0)},
+            3 => new[]{(f+1, 1)},
+            _ => System.Array.Empty<(int,int)>()
+        };
+        foreach (var (fv, sv) in vecFila)
+            if (fv >= 0 && fv < 4) yield return (fv, col, sv);
+    }
+
+    private bool EsElementoImpresoDeTipo(CardData card, int slot, System.Func<TileData.TileType, bool> esTipo)
+    {
+        if (card == null) return false;
+        string[] nombres = { "Sup-Izq", "Sup-Der", "Inf-Izq", "Inf-Der" };
+        foreach (var e in card.Spaces)
+        {
+            if (e.Position != nombres[slot]) continue;
+            if (!e.IsOccupied) continue;
+            // Mapear tipo de elemento impreso a TileType aproximado
+            var tipoAprox = MapearContenidoATipo(e.Content);
+            return tipoAprox.HasValue && esTipo(tipoAprox.Value);
+        }
+        return false;
+    }
+
+    private static TileData.TileType? MapearContenidoATipo(string content) => content switch {
+        "Edif.Azul" or "Agua"       => TileData.TileType.VitalTorre,
+        "Hábitat"                   => TileData.TileType.VitalCubo,
+        "Invernadero"               => TileData.TileType.InvernaderoVerde,
+        "Cráter" or "Astro"         => TileData.TileType.Meteorito,
+        "Satélite"                  => TileData.TileType.Oficina,
+        _                           => (TileData.TileType?)null
+    };
+
+    private int ContarTiposHumano(params TileData.TileType[] tipos)
+    {
+        int count = 0;
+        foreach (var fila in filasHumano)
+            foreach (var ct in fila.Values)
+                foreach (var l in ct.LosetasColocadas)
+                    if (l != null && tipos.Contains(l.Type)) count++;
+        return count;
+    }
+
+    private int ContarMeteoritosImpresosHumano()
+    {
+        int c = 0;
+        foreach (var fila in filasHumano)
+            foreach (var ct in fila.Values)
+                if (ct.Data != null)
+                    foreach (var e in ct.Data.Spaces)
+                        if (e.IsOccupied && (e.Content == "Astro" || e.Content == "Cráter")) c++;
+        return c;
+    }
+
+    private int ContarMeteoritosImpresosAutomata() =>
+        cartasAutomata.Sum(c => c.Spaces.Count(e => e.IsOccupied && (e.Content == "Astro" || e.Content == "Cráter")));
+
+    private int ContarVitalesImpresosAutomata() =>
+        cartasAutomata.Sum(c => c.Spaces.Count(e => e.IsOccupied &&
+            (e.Content == "Edif.Azul" || e.Content == "Agua" || e.Content == "Hábitat")));
+
+    private int CalcularTriosInvernadero()
+    {
+        int v = 0, n = 0, am = 0;
+        foreach (var fila in filasHumano)
+            foreach (var ct in fila.Values)
+                foreach (var l in ct.LosetasColocadas)
+                {
+                    if (l == null) continue;
+                    if (l.Type == TileData.TileType.InvernaderoVerde)   v++;
+                    if (l.Type == TileData.TileType.InvernaderoNaranja) n++;
+                    if (l.Type == TileData.TileType.InvernaderoAmarillo) am++;
+                }
+        return System.Math.Min(System.Math.Min(v, n), am) * 5;
+    }
+
+    private int CalcularTriosAutomata()
+    {
+        int v = losetasAutomata.Count(l => l.Type == TileData.TileType.InvernaderoVerde);
+        int n = losetasAutomata.Count(l => l.Type == TileData.TileType.InvernaderoNaranja);
+        int am = losetasAutomata.Count(l => l.Type == TileData.TileType.InvernaderoAmarillo);
+        return System.Math.Min(System.Math.Min(v, n), am) * 5;
+    }
+
+    private int CalcularPuntosConcesionesHumano()
+    {
+        int pts = 0;
+        // Concesión roja: 100% en fase 1-2, 50% en fase 3
+        if (faseCumplimientoConcesion[0] > 0 && concesionDataLargo != null)
+        {
+            int base_ = concesionDataLargo.VictoryPoints;
+            pts += faseCumplimientoConcesion[0] < 3 ? base_ : (int)System.Math.Ceiling(base_ / 2.0);
+        }
+        // Concesiones verdes: 100% en fase 1, 50% en fase 2, 0 en fase 3
+        if (faseCumplimientoConcesion[1] > 0 && concesionDataCorto1 != null)
+        {
+            int base_ = concesionDataCorto1.VictoryPoints;
+            if (faseCumplimientoConcesion[1] == 1) pts += base_;
+            else if (faseCumplimientoConcesion[1] == 2) pts += (int)System.Math.Ceiling(base_ / 2.0);
+        }
+        if (faseCumplimientoConcesion[2] > 0 && concesionDataCorto2 != null)
+        {
+            int base_ = concesionDataCorto2.VictoryPoints;
+            if (faseCumplimientoConcesion[2] == 1) pts += base_;
+            else if (faseCumplimientoConcesion[2] == 2) pts += (int)System.Math.Ceiling(base_ / 2.0);
+        }
+        return pts;
+    }
+
+    private void MostrarVistaResultados(ResultadoPartida r)
+    {
+        // Ocultar todo lo demás y mostrar el panel de resultados
+        vistaMercado.Visible = false;
+        vistaTablero.Visible = false;
+
+        // Crear panel de resultados dinámicamente si no existe
+        var existente = GetTree().Root.FindChild("PantallaResultados", true, false);
+        existente?.QueueFree();
+
+        // Panel de fondo semiopaco que cubre toda la pantalla
+        var overlay = new ColorRect();
+        overlay.Name = "PantallaResultados";
+        overlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        overlay.LayoutMode = 1;
+        overlay.AnchorRight = 1f; overlay.AnchorBottom = 1f;
+        overlay.Color = new Color(0.08f, 0.08f, 0.12f, 0.95f);
+
+        // Contenedor central
+        var vbox = new VBoxContainer();
+        vbox.SetAnchorsPreset(Control.LayoutPreset.Center);
+        vbox.LayoutMode = 1;
+        vbox.AnchorLeft = 0.1f; vbox.AnchorTop = 0.05f;
+        vbox.AnchorRight = 0.9f; vbox.AnchorBottom = 0.95f;
+        vbox.GrowHorizontal = Control.GrowDirection.Both;
+        vbox.GrowVertical = Control.GrowDirection.Both;
+        vbox.AddThemeConstantOverride("separation", 6);
+
+        // Título
+        string titulo = r.GanaHumano ? "🎉 ¡GANASTE!" : "El Autómata gana";
+        var lblTitulo = new Label();
+        lblTitulo.Text = titulo;
+        lblTitulo.HorizontalAlignment = HorizontalAlignment.Center;
+        lblTitulo.AddThemeFontSizeOverride("font_size", 32);
+        lblTitulo.AddThemeColorOverride("font_color",
+            r.GanaHumano ? new Color(0.3f, 1f, 0.5f) : new Color(1f, 0.4f, 0.4f));
+        vbox.AddChild(lblTitulo);
+
+        // Tabla de puntajes como RichTextLabel
+        var rtl = new RichTextLabel();
+        rtl.SizeFlagsVertical = Control.SizeFlags.Fill | Control.SizeFlags.Expand;
+        rtl.SizeFlagsHorizontal = Control.SizeFlags.Fill | Control.SizeFlags.Expand;
+        rtl.BbcodeEnabled = true;
+        rtl.FitContent = false;
+        rtl.AddThemeFontSizeOverride("normal_font_size", 18);
+
+        string ganadoH = r.TotalHumano > r.TotalAutomata ? " ✓" : "";
+        string ganadoA = r.TotalAutomata >= r.TotalHumano ? " ✓" : "";
+
+        rtl.Text =
+            "[center][b]PUNTAJE FINAL[/b][/center]\n\n" +
+            $"[table=3]" +
+            $"[cell][b]Categoría[/b][/cell][cell][b]  Tú[/b][/cell][cell][b]  Autómata[/b][/cell]" +
+            $"[cell]Sistemas Vitales[/cell][cell]  {r.HumanoVitales}[/cell][cell]  {r.AutomataVitales}[/cell]" +
+            $"[cell]Invernaderos[/cell][cell]  {r.HumanoInvernaderos}[/cell][cell]  {r.AutomataInvernaderos}[/cell]" +
+            $"[cell]Meteoritos[/cell][cell]  {r.HumanoMeteorita}[/cell][cell]  {r.AutomataMeteorita}[/cell]" +
+            $"[cell]Oficinas de Venta[/cell][cell]  {r.HumanoOficinas}[/cell][cell]  {r.AutomataOficinas}[/cell]" +
+            $"[cell]Constr. Especiales[/cell][cell]  {r.HumanoEspeciales}[/cell][cell]  {r.AutomataEspeciales}[/cell]" +
+            $"[cell]Losetas de Acción[/cell][cell]  —[/cell][cell]  {r.AutomataAccion}[/cell]" +
+            $"[cell]Cartas iniciales[/cell][cell]  {r.HumanoCartasIniciales}[/cell][cell]  {r.AutomataCartasIniciales}[/cell]" +
+            $"[cell]Concesiones[/cell][cell]  {r.HumanoConcesiones}[/cell][cell]  {r.AutomataConcesiones}[/cell]" +
+            $"[cell][b]TOTAL[/b][/cell]" +
+            $"[cell][b]  {r.TotalHumano}{ganadoH}[/b][/cell]" +
+            $"[cell][b]  {r.TotalAutomata}{ganadoA}[/b][/cell]" +
+            $"[/table]";
+
+        vbox.AddChild(rtl);
+
+        overlay.AddChild(vbox);
+
+        // Añadir a la capa de UI por encima de todo
+        var interfaz = GetNode<CanvasLayer>("/root/Mundo/InterfazJuego");
+        interfaz.AddChild(overlay);
+
+        // Imprimir también en log
+        GD.Print($"=== PUNTAJE FINAL === Humano:{r.TotalHumano} Autómata:{r.TotalAutomata}");
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

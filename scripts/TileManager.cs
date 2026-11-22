@@ -17,39 +17,60 @@ public partial class TileManager : Node
         
         Dictionary<string, (TileData.TileType Type, string Desc)> mapaLosetas = new Dictionary<string, (TileData.TileType, string)>
         {
-            {"loseta_01", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧 + $)")},
-            {"loseta_02", (TileData.TileType.Energy, "Satélite ($)")},
-            {"loseta_03", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
-            {"loseta_04", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
-            {"loseta_05", (TileData.TileType.Heart, "Invernadero (❤️ Verde)")},
-            {"loseta_06", (TileData.TileType.Hazard, "Triángulo Peligro (⚠️)")},
-            {"loseta_07", (TileData.TileType.Heart, "Invernadero (❤️ Verde)")},
-            {"loseta_08", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
-            {"loseta_09", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
-            {"loseta_10", (TileData.TileType.Heart, "Invernadero (❤️ Verde)")},
-            {"loseta_11", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
-            {"loseta_12", (TileData.TileType.Special, "Tanque Agua (❤️ + ⚫)")},
-            {"loseta_13", (TileData.TileType.Special, "Módulo (+2 ❤️)")},
-            {"loseta_14", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧)")},
-            {"loseta_15", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
-            {"loseta_16", (TileData.TileType.Energy, "Panel Solar (⚡ doble)")},
-            {"loseta_17", (TileData.TileType.Energy, "Satélite ($)")},
-            {"loseta_18", (TileData.TileType.Energy, "Satélite ($)")},
-            {"loseta_19", (TileData.TileType.Energy, "Satélite ($)")},
-            {"loseta_20", (TileData.TileType.Hazard, "Excavadora (⚠️)")},
-            {"loseta_21", (TileData.TileType.Heart, "Invernadero (❤️ Naranja)")},
-            {"loseta_22", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
-            {"loseta_23", (TileData.TileType.Special, "Módulo (+2 ❤️)")},
-            {"loseta_24", (TileData.TileType.Special, "Módulo (+2 ⚫)")},
-            {"loseta_25", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧)")},
-            {"loseta_26", (TileData.TileType.Blackhole, "Asteroide (⚫)")},
-            {"loseta_27", (TileData.TileType.Hazard, "Excavadora (⚠️)")},
-            {"loseta_28", (TileData.TileType.Heart, "Invernadero (❤️ Amarillo)")},
-            {"loseta_29", (TileData.TileType.Heart, "Hábitat Robot (❤️)")},
-            {"loseta_30", (TileData.TileType.Special, "Rover (Especial)")},
-            {"loseta_31", (TileData.TileType.Blackhole, "Asteroide (⚫)")},
-            {"loseta_32", (TileData.TileType.Special, "Módulo (+2 ⚫)")},
-            {"loseta_33", (TileData.TileType.Special, "Edificio Azul (❤️ + 💧)")}
+            // Edificios Azules (Vitales — Torre)
+            {"loseta_01", (TileData.TileType.VitalTorre,      "Edificio Azul (❤️ + 💧 + $)")},
+            // Satélites (Oficinas de Venta $)
+            {"loseta_02", (TileData.TileType.Oficina,         "Satélite ($)")},
+            // Tanques de Agua (Vitales — Cúpula)
+            {"loseta_03", (TileData.TileType.VitalCupula,     "Tanque Agua (❤️ + ⚫)")},
+            {"loseta_04", (TileData.TileType.VitalCupula,     "Tanque Agua (❤️ + ⚫)")},
+            // Invernaderos
+            {"loseta_05", (TileData.TileType.InvernaderoVerde,"Invernadero (❤️ Verde)")},
+            // Peligro
+            {"loseta_06", (TileData.TileType.Hazard,          "Triángulo Peligro (⚠️)")},
+            {"loseta_07", (TileData.TileType.InvernaderoVerde,"Invernadero (❤️ Verde)")},
+            // Hábitat Robot (Vitales — Cubo)
+            {"loseta_08", (TileData.TileType.VitalCubo,       "Hábitat Robot (❤️)")},
+            {"loseta_09", (TileData.TileType.VitalCupula,     "Tanque Agua (❤️ + ⚫)")},
+            {"loseta_10", (TileData.TileType.InvernaderoVerde,"Invernadero (❤️ Verde)")},
+            {"loseta_11", (TileData.TileType.VitalCubo,       "Hábitat Robot (❤️)")},
+            {"loseta_12", (TileData.TileType.VitalCupula,     "Tanque Agua (❤️ + ⚫)")},
+            // Módulos Especiales (Especial +2/corazón)
+            {"loseta_13", (TileData.TileType.EspecialModulo,  "Módulo (+2 ❤️)")},
+            // Edificio Azul (Vital Torre)
+            {"loseta_14", (TileData.TileType.VitalTorre,      "Edificio Azul (❤️ + 💧)")},
+            {"loseta_15", (TileData.TileType.VitalCubo,       "Hábitat Robot (❤️)")},
+            // Panel Solar (Oficina)
+            {"loseta_16", (TileData.TileType.Oficina,         "Panel Solar (⚡ doble)")},
+            // Satélites
+            {"loseta_17", (TileData.TileType.Oficina,         "Satélite ($)")},
+            {"loseta_18", (TileData.TileType.Oficina,         "Satélite ($)")},
+            {"loseta_19", (TileData.TileType.Oficina,         "Satélite ($)")},
+            // Excavadora (Acción / Peligro)
+            {"loseta_20", (TileData.TileType.Accion,          "Excavadora (⚠️)")},
+            // Invernaderos Naranja/Amarillo
+            {"loseta_21", (TileData.TileType.InvernaderoNaranja,"Invernadero (❤️ Naranja)")},
+            {"loseta_22", (TileData.TileType.VitalCubo,       "Hábitat Robot (❤️)")},
+            // Módulo especial (complejo espacial)
+            {"loseta_23", (TileData.TileType.EspecialComplejo,"Módulo (+2 ❤️)")},
+            {"loseta_24", (TileData.TileType.EspecialModulo,  "Módulo (+2 ⚫)")},
+            // Edificio Azul
+            {"loseta_25", (TileData.TileType.VitalTorre,      "Edificio Azul (❤️ + 💧)")},
+            // Meteoritos
+            {"loseta_26", (TileData.TileType.Meteorito,       "Asteroide (⚫)")},
+            // Excavadora Acción
+            {"loseta_27", (TileData.TileType.Accion,          "Excavadora (⚠️)")},
+            // Invernadero Amarillo
+            {"loseta_28", (TileData.TileType.InvernaderoAmarillo,"Invernadero (❤️ Amarillo)")},
+            {"loseta_29", (TileData.TileType.VitalCubo,       "Hábitat Robot (❤️)")},
+            // Rover (Especial)
+            {"loseta_30", (TileData.TileType.EspecialRover,   "Rover (Especial)")},
+            // Meteorito
+            {"loseta_31", (TileData.TileType.Meteorito,       "Asteroide (⚫)")},
+            // Módulo
+            {"loseta_32", (TileData.TileType.EspecialModulo,  "Módulo (+2 ⚫)")},
+            // Edificio Azul
+            {"loseta_33", (TileData.TileType.VitalTorre,      "Edificio Azul (❤️ + 💧)")}
         };
 
         foreach (var item in mapaLosetas)

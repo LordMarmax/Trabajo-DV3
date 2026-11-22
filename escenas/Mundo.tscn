@@ -173,6 +173,11 @@ offset_bottom = 630.0
 layout_mode = 2
 theme_override_constants/separation = 8
 
+[node name="Fila0" type="HBoxContainer" parent="InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer" unique_id=1847021600]
+clip_contents = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
 [node name="Fila1" type="HBoxContainer" parent="InterfazJuego/VistaTableroPersonal/ScrollContainer/VBoxContainer" unique_id=1847021604]
 clip_contents = true
 layout_mode = 2
@@ -238,43 +243,6 @@ visible = false
 offset_right = 1.0
 offset_bottom = 1.0
 text = "Fase 3"
-
-[node name="PanelElegirFila" type="PanelContainer" parent="InterfazJuego" unique_id=421938750]
-visible = false
-offset_left = 400.0
-offset_top = 240.0
-offset_right = 750.0
-offset_bottom = 400.0
-
-[node name="VBox" type="VBoxContainer" parent="InterfazJuego/PanelElegirFila" unique_id=421938751]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="LabelPregunta" type="Label" parent="InterfazJuego/PanelElegirFila/VBox" unique_id=421938752]
-layout_mode = 2
-text = "¿En qué fila colocas la carta?"
-horizontal_alignment = 1
-
-[node name="BtnFila1" type="Button" parent="InterfazJuego/PanelElegirFila/VBox" unique_id=421938753]
-layout_mode = 2
-text = "Fila 1"
-
-[node name="BtnFila2" type="Button" parent="InterfazJuego/PanelElegirFila/VBox" unique_id=421938754]
-layout_mode = 2
-text = "Fila 2"
-
-[node name="BtnFila3" type="Button" parent="InterfazJuego/PanelElegirFila/VBox" unique_id=421938755]
-layout_mode = 2
-text = "Fila 3"
-
-[node name="LabelError" type="Label" parent="InterfazJuego/PanelElegirFila/VBox" unique_id=421938756]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
-autowrap_mode = 3
-
-[node name="BtnCancelar" type="Button" parent="InterfazJuego/PanelElegirFila/VBox" unique_id=421938757]
-layout_mode = 2
-text = "Volver a elegir carta"
 
 [node name="LogicaJuego" type="Node" parent="." unique_id=149358308]
 script = ExtResource("1_h3ccx")

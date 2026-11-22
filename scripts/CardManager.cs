@@ -71,7 +71,7 @@ public partial class CardManager : Node
             {"carta(58)", (1, "Ocup: Invernadero ❤️(Sup-Der) | Libre: 1x1(Sup-Izq), 1x1(Inf-Izq), 1x1(Inf-Der)")},
             {"carta(59)", (1, "Ocup: Satélite S(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
             {"carta(60)", (10, "Ocup: Cráter ⚫(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
-            {"carta(61)", (10, "Ocup: Invernadero ❤️(Inf-Der) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Izq)")},
+            {"carta(61)", (10, "Ocup: Invernadero ❤️(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
             {"carta(62)", (10, "Ocup: Satélite S(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},
             {"carta(63)", (10, "Ocup: Cráter ⚫(Sup-Izq) | Libre: 1x1(Sup-Der), 1x1(Inf-Izq), 1x1(Inf-Der)")},
             {"carta(64)", (10, "Ocup: Astro(Inf-Izq) | Libre: 1x1(Sup-Izq), 1x1(Sup-Der), 1x1(Inf-Der)")},

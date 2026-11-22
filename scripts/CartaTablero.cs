@@ -14,6 +14,8 @@ using System.Collections.Generic;
 public partial class CartaTablero : Control
 {
     public CardData Data { get; private set; }
+    // Si se asigna antes de entrar al árbol, _Ready lo usará para inicializar
+    public CardData DataPendiente = null;
 
     private TextureRect fondoCarta;
     // slots[0]=Sup-Izq, [1]=Sup-Der, [2]=Inf-Izq, [3]=Inf-Der
@@ -35,6 +37,13 @@ public partial class CartaTablero : Control
         slots[1] = GetNode<Control>("HuecosLosetas/Slot2");
         slots[2] = GetNode<Control>("HuecosLosetas/Slot3");
         slots[3] = GetNode<Control>("HuecosLosetas/Slot4");
+
+        // Si se asignó DataPendiente antes de entrar al árbol, inicializar ahora
+        if (DataPendiente != null)
+        {
+            Inicializar(DataPendiente);
+            DataPendiente = null;
+        }
     }
 
     public void Inicializar(CardData carta)
