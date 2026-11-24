@@ -140,35 +140,35 @@ public partial class GameManager : Node
     public override void _Ready()
     {
         // Managers
-        ManagerDeCartas = new CardManager();   AddChild(ManagerDeCartas);   ManagerDeCartas.CargarCartas();
-        ManagerDeLosetas = new TileManager();  AddChild(ManagerDeLosetas);
-        ManagerVerdes = new ConcesionesVerdes(); AddChild(ManagerVerdes);   ManagerVerdes.CargarCartas();
-        ManagerRojas = new ConcesionesRojas();  AddChild(ManagerRojas);    ManagerRojas.CargarCartas();
+        ManagerDeCartas = new CardManager(); AddChild(ManagerDeCartas); ManagerDeCartas.CargarCartas();
+        ManagerDeLosetas = new TileManager(); AddChild(ManagerDeLosetas);
+        ManagerVerdes = new ConcesionesVerdes(); AddChild(ManagerVerdes); ManagerVerdes.CargarCartas();
+        ManagerRojas = new ConcesionesRojas(); AddChild(ManagerRojas); ManagerRojas.CargarCartas();
 
         // Escenas
-        cartaVisualScene  = GD.Load<PackedScene>("res://escenas/CartaVisual.tscn");
+        cartaVisualScene = GD.Load<PackedScene>("res://escenas/CartaVisual.tscn");
         losetaVisualScene = GD.Load<PackedScene>("res://escenas/LosetaVisual.tscn");
         cartaTableroScene = GD.Load<PackedScene>("res://escenas/CartaTablero.tscn");
 
         // Nodos UI — usamos la escena Mundo.tscn tal como está
-        vistaMercado  = GetNode<Control>("/root/Mundo/InterfazJuego/VistaMercado");
-        vistaTablero  = GetNode<Control>("/root/Mundo/InterfazJuego/VistaTableroPersonal");
-        mercadoUI     = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaMercado/MercadoUI");
+        vistaMercado = GetNode<Control>("/root/Mundo/InterfazJuego/VistaMercado");
+        vistaTablero = GetNode<Control>("/root/Mundo/InterfazJuego/VistaTableroPersonal");
+        mercadoUI = GetNode<HBoxContainer>("/root/Mundo/InterfazJuego/VistaMercado/MercadoUI");
         manoLosetasUI = GetNode<GridContainer>("/root/Mundo/InterfazJuego/VistaTableroPersonal/ManoLosetasUI");
-        textoConsola  = GetNode<Label>("/root/Mundo/InterfazJuego/VistaMercado/TextoConsola");
-        dragLayer     = GetNode<CanvasLayer>("/root/Mundo/InterfazJuego/DragLayer");
-        labelEstado   = GetNode<Label>("/root/Mundo/InterfazJuego/LabelEstado");
+        textoConsola = GetNode<Label>("/root/Mundo/InterfazJuego/VistaMercado/TextoConsola");
+        dragLayer = GetNode<CanvasLayer>("/root/Mundo/InterfazJuego/DragLayer");
+        labelEstado = GetNode<Label>("/root/Mundo/InterfazJuego/LabelEstado");
 
-        col1Carta   = mercadoUI.GetNode<Control>("Columna1/SlotCarta");
-        col1Loseta  = mercadoUI.GetNode<Control>("Columna1/SlotLoseta");
-        col2Carta   = mercadoUI.GetNode<Control>("Columna2/SlotCarta");
-        col2Loseta  = mercadoUI.GetNode<Control>("Columna2/SlotLoseta");
-        col3Carta   = mercadoUI.GetNode<Control>("Columna3/SlotCarta");
-        col3Loseta  = mercadoUI.GetNode<Control>("Columna3/SlotLoseta");
+        col1Carta = mercadoUI.GetNode<Control>("Columna1/SlotCarta");
+        col1Loseta = mercadoUI.GetNode<Control>("Columna1/SlotLoseta");
+        col2Carta = mercadoUI.GetNode<Control>("Columna2/SlotCarta");
+        col2Loseta = mercadoUI.GetNode<Control>("Columna2/SlotLoseta");
+        col3Carta = mercadoUI.GetNode<Control>("Columna3/SlotCarta");
+        col3Loseta = mercadoUI.GetNode<Control>("Columna3/SlotLoseta");
 
         // Concesiones — nodo renombrado a ConcesionesUI (sin espacio)
         var concesionesNodo = GetNode<Control>("/root/Mundo/InterfazJuego/VistaMercado/ConcesionesUI");
-        concesionLargo  = concesionesNodo.GetNode<TextureRect>("ConcesionLargo");
+        concesionLargo = concesionesNodo.GetNode<TextureRect>("ConcesionLargo");
         concesionCorto1 = concesionesNodo.GetNode<TextureRect>("ConcesionCorto1");
         concesionCorto2 = concesionesNodo.GetNode<TextureRect>("ConcesionCorto2");
 
@@ -197,16 +197,18 @@ public partial class GameManager : Node
         btnFase2.Visible = false;
         btnFase3.Visible = false;
 
-        btnIrTablero     = GetNode<Button>("/root/Mundo/InterfazJuego/VistaMercado/BtnIrTablero");
+        btnIrTablero = GetNode<Button>("/root/Mundo/InterfazJuego/VistaMercado/BtnIrTablero");
         btnVolverMercado = GetNode<Button>("/root/Mundo/InterfazJuego/VistaTableroPersonal/BtnVolverMercado");
 
         // "Ver mi Tablero" solo va al tablero si no hay colocación pendiente
-        btnIrTablero.Pressed += () => {
+        btnIrTablero.Pressed += () =>
+        {
             if (cartaPendiente == null) CambiarVista(true);
         };
 
         // "Volver al mercado" / "Cancelar elección"
-        btnVolverMercado.Pressed += () => {
+        btnVolverMercado.Pressed += () =>
+        {
             if (cartaPendiente != null)
             {
                 // Cancelar elección de fila — devolver la columna al mercado
@@ -281,10 +283,10 @@ public partial class GameManager : Node
         if (concesionesFijadas) return;
         concesionesFijadas = true;
 
-        var rojas  = ManagerRojas.Cartas.Values.ToList();
+        var rojas = ManagerRojas.Cartas.Values.ToList();
         var verdes = ManagerVerdes.Cartas.Values.ToList();
 
-        if (rojas.Count  > 0)
+        if (rojas.Count > 0)
         {
             concesionDataLargo = rojas[rng.Next(rojas.Count)];
             concesionLargo.Texture = concesionDataLargo.ConcessionImage;
@@ -311,7 +313,7 @@ public partial class GameManager : Node
     /// </summary>
     public void IniciarFase(int fase)
     {
-        FaseActual  = fase;
+        FaseActual = fase;
         TurnoActual = 1;
 
         string letraFase = fase switch { 1 => "A", 2 => "B", _ => "C" };
@@ -427,7 +429,7 @@ public partial class GameManager : Node
     /// Calcula todas las posiciones donde la carta puede colocarse.
     /// Reglas:
     ///  - Primera carta del tablero → solo fila 1 (índice 1), columna 0.
-    ///  - En una fila con cartas: izquierda si carta.Level < mínimo, derecha si ≥ máximo.
+    ///  - En una fila con cartas: izquierda si carta.Level < mínimo, derecha si > máximo.
     ///  - Nueva fila: solo inmediatamente adyacente a filas ocupadas.
     ///  - Máximo 3 filas activas.
     ///  - Al agregar a izquierda: la nueva columna es colMin-1.
@@ -903,7 +905,7 @@ public partial class GameManager : Node
         if (data is not TileData) return;
 
         ItemArrastrado = item;
-        padreOriginal  = padre;
+        padreOriginal = padre;
         dataArrastrada = data;
 
         // Guardar posición global antes de cualquier movimiento
@@ -1057,10 +1059,10 @@ public partial class GameManager : Node
         Vector2 posDestino = (dummyOriginal != null && IsInstanceValid(dummyOriginal))
             ? dummyOriginal.GlobalPosition
             : posicionOriginal;
-        var padreDestino   = (dummyOriginal != null && IsInstanceValid(dummyOriginal))
+        var padreDestino = (dummyOriginal != null && IsInstanceValid(dummyOriginal))
             ? dummyOriginal.GetParent() as Control
             : padreOriginal;
-        int idxDestino     = (dummyOriginal != null && IsInstanceValid(dummyOriginal))
+        int idxDestino = (dummyOriginal != null && IsInstanceValid(dummyOriginal))
             ? dummyOriginal.GetIndex()
             : -1;
 
@@ -1099,7 +1101,7 @@ public partial class GameManager : Node
         LimpiarSlot(col2Carta); LimpiarSlot(col2Loseta);
         LimpiarSlot(col3Carta); LimpiarSlot(col3Loseta);
 
-        Control[] slotsCarta  = { col1Carta,  col2Carta,  col3Carta  };
+        Control[] slotsCarta = { col1Carta, col2Carta, col3Carta };
         Control[] slotsLoseta = { col1Loseta, col2Loseta, col3Loseta };
 
         for (int i = 0; i < 3; i++)
@@ -1113,13 +1115,13 @@ public partial class GameManager : Node
             cv.Data = carta;
             cv.CardIndex = i;
             cv.LayoutMode = 1;
-            cv.AnchorLeft   = 0f;
-            cv.AnchorTop    = 0f;
-            cv.AnchorRight  = 1f;
+            cv.AnchorLeft = 0f;
+            cv.AnchorTop = 0f;
+            cv.AnchorRight = 1f;
             cv.AnchorBottom = 1f;
-            cv.OffsetLeft   = 0f;
-            cv.OffsetTop    = 0f;
-            cv.OffsetRight  = 0f;
+            cv.OffsetLeft = 0f;
+            cv.OffsetTop = 0f;
+            cv.OffsetRight = 0f;
             cv.OffsetBottom = 0f;
             cv.IgnoreTextureSize = true;
             cv.StretchMode = TextureButton.StretchModeEnum.Scale;
@@ -1141,8 +1143,8 @@ public partial class GameManager : Node
                 TextureRect tr = new TextureRect();
                 tr.LayoutMode = 2;      // layout de container
                 tr.SizeFlagsHorizontal = Control.SizeFlags.Fill | Control.SizeFlags.Expand;
-                tr.SizeFlagsVertical   = Control.SizeFlags.Fill | Control.SizeFlags.Expand;
-                tr.ExpandMode  = TextureRect.ExpandModeEnum.IgnoreSize;
+                tr.SizeFlagsVertical = Control.SizeFlags.Fill | Control.SizeFlags.Expand;
+                tr.ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize;
                 tr.StretchMode = TextureRect.StretchModeEnum.Scale; // rellena la celda exacta
                 tr.MouseFilter = Control.MouseFilterEnum.Ignore;
 
@@ -1265,16 +1267,16 @@ public partial class GameManager : Node
         r.HumanoVitales = CalcularPuntosGrupos(EsTipoVital);
 
         // 2. Invernaderos — grupos + tríos de 3 frutas distintas
-        r.HumanoInvernaderos  = CalcularPuntosGrupos(EsTipoInvernadero);
+        r.HumanoInvernaderos = CalcularPuntosGrupos(EsTipoInvernadero);
         r.HumanoInvernaderos += CalcularTriosInvernadero();
 
         // 3. Meteoritos (mayoría)
-        int meteorosHumano   = ContarTiposHumano(TileData.TileType.Meteorito);
+        int meteorosHumano = ContarTiposHumano(TileData.TileType.Meteorito);
         int meteorosAutomata = losetasAutomata.Count(l => l.Type == TileData.TileType.Meteorito);
         // también contar meteoritos impresos en cartas del humano
-        meteorosHumano   += ContarMeteoritosImpresosHumano();
+        meteorosHumano += ContarMeteoritosImpresosHumano();
         meteorosAutomata += ContarMeteoritosImpresosAutomata();
-        r.HumanoMeteorita  = meteorosHumano > meteorosAutomata ? 10 : 0;
+        r.HumanoMeteorita = meteorosHumano > meteorosAutomata ? 10 : 0;
 
         // 4. Oficinas de Venta
         r.HumanoOficinas = ContarTiposHumano(TileData.TileType.Oficina) * 2;
@@ -1302,7 +1304,7 @@ public partial class GameManager : Node
 
         // 2. Invernaderos — acumulativo + tríos
         int autoInvTotal = losetasAutomata.Count(l => EsTipoInvernadero(l.Type));
-        r.AutomataInvernaderos  = PuntosGrupoPorTamano(autoInvTotal);
+        r.AutomataInvernaderos = PuntosGrupoPorTamano(autoInvTotal);
         r.AutomataInvernaderos += CalcularTriosAutomata();
 
         // 3. Meteoritos (mayoría)
@@ -1325,14 +1327,14 @@ public partial class GameManager : Node
 
         // 8. Concesiones del autómata — siempre cumple todas al 100%
         r.AutomataConcesiones = 0;
-        if (concesionDataLargo  != null) r.AutomataConcesiones += concesionDataLargo.VictoryPoints;
+        if (concesionDataLargo != null) r.AutomataConcesiones += concesionDataLargo.VictoryPoints;
         if (concesionDataCorto1 != null) r.AutomataConcesiones += concesionDataCorto1.VictoryPoints;
         if (concesionDataCorto2 != null) r.AutomataConcesiones += concesionDataCorto2.VictoryPoints;
 
         // ═══════════════════════════════════════════════════
         // TOTALES Y RESULTADO
         // ═══════════════════════════════════════════════════
-        r.TotalHumano   = r.HumanoVitales + r.HumanoInvernaderos + r.HumanoMeteorita +
+        r.TotalHumano = r.HumanoVitales + r.HumanoInvernaderos + r.HumanoMeteorita +
                           r.HumanoOficinas + r.HumanoEspeciales + r.HumanoCartasIniciales +
                           r.HumanoConcesiones;
         r.TotalAutomata = r.AutomataVitales + r.AutomataInvernaderos + r.AutomataMeteorita +
@@ -1446,11 +1448,12 @@ public partial class GameManager : Node
         // InfIzq ↔ InfDer (misma fila inferior)
         // SupIzq ↔ InfIzq (misma columna izquierda)
         // SupDer ↔ InfDer (misma columna derecha)
-        int[] mismaCartaVecinos = slot switch {
-            0 => new[]{1, 2},
-            1 => new[]{0, 3},
-            2 => new[]{0, 3},
-            3 => new[]{1, 2},
+        int[] mismaCartaVecinos = slot switch
+        {
+            0 => new[] { 1, 2 },
+            1 => new[] { 0, 3 },
+            2 => new[] { 0, 3 },
+            3 => new[] { 1, 2 },
             _ => System.Array.Empty<int>()
         };
         foreach (int s2 in mismaCartaVecinos)
@@ -1461,12 +1464,13 @@ public partial class GameManager : Node
         // slot 1 (SupDer) ↔ slot 0 (SupIzq) de la carta a la derecha
         // slot 2 (InfIzq) ↔ slot 3 (InfDer) de la carta a la izquierda
         // slot 3 (InfDer) ↔ slot 2 (InfIzq) de la carta a la derecha
-        (int colVec, int slotVec)[] vecColum = slot switch {
-            0 => new[]{(col-1, 1)},
-            1 => new[]{(col+1, 0)},
-            2 => new[]{(col-1, 3)},
-            3 => new[]{(col+1, 2)},
-            _ => System.Array.Empty<(int,int)>()
+        (int colVec, int slotVec)[] vecColum = slot switch
+        {
+            0 => new[] { (col - 1, 1) },
+            1 => new[] { (col + 1, 0) },
+            2 => new[] { (col - 1, 3) },
+            3 => new[] { (col + 1, 2) },
+            _ => System.Array.Empty<(int, int)>()
         };
         foreach (var (cv, sv) in vecColum)
             yield return (f, cv, sv);
@@ -1474,12 +1478,13 @@ public partial class GameManager : Node
         // Vecinos en la fila adyacente (arriba/abajo), misma columna
         // slot SupIzq(0)/SupDer(1) de fila f ↔ slot InfIzq(2)/InfDer(3) de fila f-1
         // slot InfIzq(2)/InfDer(3) de fila f ↔ slot SupIzq(0)/SupDer(1) de fila f+1
-        (int filaVec, int slotVecF)[] vecFila = slot switch {
-            0 => new[]{(f-1, 2)},
-            1 => new[]{(f-1, 3)},
-            2 => new[]{(f+1, 0)},
-            3 => new[]{(f+1, 1)},
-            _ => System.Array.Empty<(int,int)>()
+        (int filaVec, int slotVecF)[] vecFila = slot switch
+        {
+            0 => new[] { (f - 1, 2) },
+            1 => new[] { (f - 1, 3) },
+            2 => new[] { (f + 1, 0) },
+            3 => new[] { (f + 1, 1) },
+            _ => System.Array.Empty<(int, int)>()
         };
         foreach (var (fv, sv) in vecFila)
             if (fv >= 0 && fv < 4) yield return (fv, col, sv);
@@ -1500,13 +1505,14 @@ public partial class GameManager : Node
         return false;
     }
 
-    private static TileData.TileType? MapearContenidoATipo(string content) => content switch {
-        "Edif.Azul" or "Agua"       => TileData.TileType.VitalTorre,
-        "Hábitat"                   => TileData.TileType.VitalCubo,
-        "Invernadero"               => TileData.TileType.InvernaderoVerde,
-        "Cráter" or "Astro"         => TileData.TileType.Meteorito,
-        "Satélite"                  => TileData.TileType.Oficina,
-        _                           => (TileData.TileType?)null
+    private static TileData.TileType? MapearContenidoATipo(string content) => content switch
+    {
+        "Edif.Azul" or "Agua" => TileData.TileType.VitalTorre,
+        "Hábitat" => TileData.TileType.VitalCubo,
+        "Invernadero" => TileData.TileType.InvernaderoVerde,
+        "Cráter" or "Astro" => TileData.TileType.Meteorito,
+        "Satélite" => TileData.TileType.Oficina,
+        _ => (TileData.TileType?)null
     };
 
     private int ContarTiposHumano(params TileData.TileType[] tipos)
@@ -1545,7 +1551,7 @@ public partial class GameManager : Node
                 foreach (var l in ct.LosetasColocadas)
                 {
                     if (l == null) continue;
-                    if (l.Type == TileData.TileType.InvernaderoVerde)   v++;
+                    if (l.Type == TileData.TileType.InvernaderoVerde) v++;
                     if (l.Type == TileData.TileType.InvernaderoNaranja) n++;
                     if (l.Type == TileData.TileType.InvernaderoAmarillo) am++;
                 }
@@ -1669,8 +1675,8 @@ public partial class GameManager : Node
 
     private void CambiarVista(bool mostrarTablero)
     {
-        vistaMercado.Visible  = !mostrarTablero;
-        vistaTablero.Visible  =  mostrarTablero;
+        vistaMercado.Visible = !mostrarTablero;
+        vistaTablero.Visible = mostrarTablero;
     }
 
     private void Log(string msg)
