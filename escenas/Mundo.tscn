@@ -28,28 +28,27 @@ stretch_mode = 5
 
 [node name="ConcesionesUI" type="HBoxContainer" parent="InterfazJuego/VistaMercado" unique_id=349004396]
 layout_mode = 0
-offset_left = 25.0
-offset_top = 4.0
-offset_right = 500.0
-offset_bottom = 100.0
+offset_left = 850.0
+offset_right = 1293.0
+offset_bottom = 283.0
 theme_override_constants/separation = 8
 
 [node name="ConcesionLargo" type="TextureRect" parent="InterfazJuego/VistaMercado/ConcesionesUI" unique_id=217960990]
-custom_minimum_size = Vector2(60, 92)
+custom_minimum_size = Vector2(125, 183)
 layout_mode = 2
 size_flags_vertical = 3
 expand_mode = 1
 stretch_mode = 5
 
 [node name="ConcesionCorto1" type="TextureRect" parent="InterfazJuego/VistaMercado/ConcesionesUI" unique_id=728901599]
-custom_minimum_size = Vector2(56, 88)
+custom_minimum_size = Vector2(125, 183)
 layout_mode = 2
 size_flags_vertical = 3
 expand_mode = 1
 stretch_mode = 5
 
 [node name="ConcesionCorto2" type="TextureRect" parent="InterfazJuego/VistaMercado/ConcesionesUI" unique_id=1259183390]
-custom_minimum_size = Vector2(56, 88)
+custom_minimum_size = Vector2(125, 183)
 layout_mode = 2
 size_flags_vertical = 3
 expand_mode = 1
@@ -215,10 +214,10 @@ columns = 2
 layer = 100
 
 [node name="LabelEstado" type="Label" parent="InterfazJuego" unique_id=1757360487]
-offset_left = 13.0
-offset_top = 4.0
-offset_right = 400.0
-offset_bottom = 46.0
+offset_left = 6.0
+offset_top = 1.0
+offset_right = 393.0
+offset_bottom = 43.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2

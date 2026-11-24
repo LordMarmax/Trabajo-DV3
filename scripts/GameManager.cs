@@ -472,7 +472,7 @@ public partial class GameManager : Node
                 resultado.Add(new PosicionColocacion(f, false, false, minCol - 1));
 
             // Agregar a la derecha: columna = maxCol + 1 (específica de esta fila)
-            if (carta.Level >= nivelDer)
+            if (carta.Level > nivelDer)
                 resultado.Add(new PosicionColocacion(f, true, false, maxCol + 1));
         }
 
